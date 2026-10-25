@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>seed</title></head>
+<body>
+<!-- 测试夹具：向 localStorage 灌入 6 条演示订阅（覆盖 subtrack-v2）。
+     执行守卫（规范 §16）：必须显式 ?run=1，防止误开清掉真实数据。
+     用法：浏览器打开 tests/seed.html?run=1 → 自动跳回根目录 index.html 渲染。 -->
+<script>
+  if (location.search.indexOf('run=1') === -1) {
+    document.body.innerHTML = '<p>执行守卫：本页会用演示数据覆盖 subtrack-v2。'
+      + '确认后请访问 <code>tests/seed.html?run=1</code>。</p>';
+  } else {
+    var now = Date.now();
+    var day = 86400000;
+    function dateStr(d) { return new Date(d).toISOString().slice(0, 10); }
+    var subs = [
+      {
+        id: 's1', name: 'Netflix', tag: '视频', serviceType: 'streaming',
+        paymentType: 'monthly', lastRenewalDate: dateStr(now - 25 * day),
+        nextRenewalDate: dateStr(now + 5 * day), price: 78, billingCycle: 'monthly',
+        feeDetails: '高级套餐 4K', reminderRule: '7days', corePurpose: 'personal',
+        order: 0, createdAt: now - 90 * day, updatedAt: now
+      },
+      {
+        id: 's2', name: 'iCloud+ 200G', tag: '云存储', serviceType: 'cloud',
+        paymentType: 'yearly', lastRenewalDate: dateStr(now - 60 * day),
+        nextRenewalDate: dateStr(now + 305 * day), price: 388, billingCycle: 'yearly',
+        feeDetails: '家庭共享划算', reminderRule: '30days', corePurpose: 'family',
+        order: 1, createdAt: now - 200 * day, updatedAt: now
+      },
+      {
+        id: 's3', name: 'GitHub Pro', tag: '开发', serviceType: 'devTools',
+        paymentType: 'monthly', lastRenewalDate: dateStr(now - 12 * day),
+        nextRenewalDate: dateStr(now + 18 * day), price: 32, billingCycle: 'monthly',
+        feeDetails: '', reminderRule: '7days', corePurpose: 'work',
+        order: 2, createdAt: now - 365 * day, updatedAt: now
+      },
+      {
+        id: 's4', name: 'Spotify', tag: '音乐', serviceType: 'music',
+        paymentType: 'yearly', lastRenewalDate: dateStr(now - 30 * day),
+        nextRenewalDate: dateStr(now + 335 * day), price: 168, billingCycle: 'yearly',
+        feeDetails: '学生套餐', reminderRule: '30days', corePurpose: 'personal',
+        order: 3, createdAt: now - 100 * day, updatedAt: now
+      },
+      {
+        id: 's5', name: 'Notion', tag: '办公', serviceType: 'office',
+        paymentType: 'monthly', lastRenewalDate: dateStr(now - 20 * day),
+        nextRenewalDate: dateStr(now + 2 * day), price: 60, billingCycle: 'monthly',
+        feeDetails: '团队版', reminderRule: '7days', corePurpose: 'work',
+        order: 4, createdAt: now - 50 * day, updatedAt: now
+      },
+      {
+        id: 's6', name: 'ChatGPT Plus', tag: 'AI', serviceType: 'ai',
+        paymentType: 'monthly', lastRenewalDate: dateStr(now - 3 * day),
+        nextRenewalDate: dateStr(now + 27 * day), price: 130, billingCycle: 'monthly',
+        feeDetails: '日常写代码用', reminderRule: '7days', corePurpose: 'work',
+        order: 5, createdAt: now - 180 * day, updatedAt: now
+      }
+    ];
+    localStorage.setItem('subtrack-v2', JSON.stringify({ v: 2, subscriptions: subs }));
+    // 相对路径：GitHub Pages 项目站挂在 /<repo>/ 子路径下，绝对路径 /index.html 上线即 404（规范 §7.4）
+    var m = location.search.match(/detail=([\w-]+)/);
+    if (m) location.href = '../index.html?detail=' + m[1] + '#seed';
+    else location.href = '../index.html#seed';
+  }
+</script>
+</body></html>

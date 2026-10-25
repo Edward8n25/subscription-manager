@@ -1,0 +1,19 @@
+# ---- 开发期产物（不在 GitHub 公开；规范 §7 三类边界） ----
+.dev/
+node_modules/
+archive/
+.trash-pending/
+*.bak
+
+# ---- 系统/编辑器 ----
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.log
+*.tmp
+*~
+
+# ---- 其他 ----
+.workbuddy/
