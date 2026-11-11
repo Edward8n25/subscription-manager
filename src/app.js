@@ -268,6 +268,11 @@
     return date.getFullYear() + '/' + pad2(date.getMonth() + 1) + '/' + pad2(date.getDate());
   }
 
+  // E-02：日期无效（格式合法但不存在，如导入混入的 2026-02-30）时回退占位文案，而非渲染空白
+  function formatDateSafe(d, fallback) {
+    return formatDate(d) || (fallback || '未设置');
+  }
+
   function todayISO() {
     var d = new Date();
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
@@ -401,18 +406,21 @@
     });
     html += '</div>';
 
+    // 过滤 + 排序（N-09：计数随筛选态展示，先算 filtered 再渲染计数）
+    var filtered = filterAndSort(subs, prefs);
+    var filterActive = (prefs.tag && prefs.tag !== 'all') || (prefs.search || '').trim() !== '';
+
     // 排序
     html += '<div class="sort-bar">'
-         + '  <span>共 ' + subs.length + ' 项 ·</span>'
+         + '  <span>' + (filterActive
+             ? '筛出 ' + filtered.length + ' / 共 ' + subs.length + ' 项 ·'
+             : '共 ' + subs.length + ' 项 ·') + '</span>'
          + '  <select id="sortSelect">'
          + '    <option value="nextRenewalDate"' + (prefs.sortBy === 'nextRenewalDate' ? ' selected' : '') + '>按续费时间</option>'
          + '    <option value="price"' + (prefs.sortBy === 'price' ? ' selected' : '') + '>按价格</option>'
          + '    <option value="name"' + (prefs.sortBy === 'name' ? ' selected' : '') + '>按名称</option>'
          + '  </select>'
          + '</div>';
-
-    // 过滤 + 排序
-    var filtered = filterAndSort(subs, prefs);
 
     if (filtered.length === 0) {
       if (state.subscriptions.length === 0) {
@@ -495,7 +503,7 @@
       + '  <div class="card-price' + (free ? ' free' : '') + '">' + priceText + (priceUnit ? '<span class="card-price-unit">' + esc(priceUnit) + '</span>' : '') + '</div>'
       + (badges ? '<div class="badges">' + badges + '</div>' : '')
       + '  <div class="card-meta">'
-      + '    <span>续费 <b class="' + expiredClass + '">' + (s.nextRenewalDate ? formatDate(s.nextRenewalDate) : '未设置') + '</b></span>'
+      + '    <span>续费 <b class="' + expiredClass + '">' + formatDateSafe(s.nextRenewalDate) + '</b></span>'
       + '    <span>' + esc(getBillingLabel(s.billingCycle)) + '</span>'
       + '    <span>' + esc(getPurposeLabel(s.corePurpose)) + '</span>'
       + '  </div>'
@@ -685,7 +693,7 @@
 
     // 数据四宫格
     html += '<div class="stat-grid">'
-         + statCard('下次续费', daysText, s.nextRenewalDate ? formatDate(s.nextRenewalDate) : '未设置', daysClass)
+         + statCard('下次续费', daysText, formatDateSafe(s.nextRenewalDate), daysClass)
          + statCard('每月折算', '¥' + monthly.toFixed(2), isRecurring ? cycleMonthlySub(s.billingCycle) : '—')
          + statCard('每年折算', '¥' + annual.toFixed(2), isRecurring ? cycleAnnualSub(s.billingCycle) : '—')
          + statCard('已使用', Math.max(0, Math.floor((Date.now() - s.createdAt) / 86400000)) + ' 天', '加入于 ' + formatDate(s.createdAt))
@@ -699,7 +707,7 @@
          + kvRow('计费周期', getBillingLabel(s.billingCycle))
          + kvRow('核心用途', getPurposeLabel(s.corePurpose))
          + kvRow('续费提醒', getReminderLabel(s.reminderRule))
-         + kvRow('上次续费', s.lastRenewalDate ? formatDate(s.lastRenewalDate) : '无记录')
+         + kvRow('上次续费', formatDateSafe(s.lastRenewalDate, '无记录'))
          + '</div>';
 
     if (s.feeDetails) {
@@ -959,7 +967,7 @@
              + '    <div class="card-tag">' + (days === 0 ? '今天' : days + ' 天后') + '</div>'
              + '  </div>'
              + '  <div class="card-price' + (s.paymentType === 'free' ? ' free' : '') + '">' + (s.paymentType === 'free' ? '免费' : '¥' + (s.price || 0).toFixed(2)) + '</div>'
-             + '  <div class="card-meta"><span>' + formatDate(s.nextRenewalDate) + '</span></div>'
+             + '  <div class="card-meta"><span>' + formatDateSafe(s.nextRenewalDate) + '</span></div>'
              + '</div>';
       });
       html += '</div>';
@@ -1080,7 +1088,7 @@
       + '  <div class="field"><label>下次续费 <span class="required">*</span></label><input class="input" type="date" name="nextRenewalDate" value="' + esc(d.nextRenewalDate) + '" required></div>'
       + '</div>'
       + '<div class="field-row">'
-      + '  <div class="field"><label>续费价格 <span class="required">*</span></label><input class="input" type="number" name="price" value="' + (d.price || '') + '" placeholder="0.00" step="0.01" min="0" required></div>'
+      + '  <div class="field"><label>续费价格 <span class="required">*</span></label><input class="input" type="number" name="price" value="' + (d.price || '') + '" placeholder="0.00" step="0.01" min="0" max="999999" required></div>'
       + '  <div class="field"><label>计费周期</label><select class="select" name="billingCycle">' + billingOptions + '</select></div>'
       + '</div>'
       + '<div class="field-row">'
@@ -1122,6 +1130,7 @@
         if (!data.tag) { toast('请填写标签', 'warning'); return; }
         if (!data.nextRenewalDate) { toast('请选择下次续费时间', 'warning'); return; }
         if (data.paymentType !== 'free' && data.price < 0) { toast('价格无效', 'warning'); return; }
+        if (data.price > 999999) { toast('价格超出上限（≤ 999999）', 'warning'); return; }
 
         if (isEdit) {
           updateSubscription(id, data);
@@ -1204,7 +1213,7 @@
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;
-        a.download = 'subtrack-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+        a.download = 'subtrack-backup-' + todayISO() + '.json';
         a.click();
         URL.revokeObjectURL(url);
         toast('已导出', 'success');
@@ -1396,7 +1405,7 @@
   function installSeed() {
     var now = Date.now();
     var day = 86400000;
-    function dateStr(d) { return new Date(d).toISOString().slice(0, 10); }
+    function dateStr(d) { var t = new Date(d); return t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate()); }
     state.subscriptions = [
       { id: 's1', name: 'Netflix', tag: '视频', serviceType: 'streaming',
         paymentType: 'monthly', lastRenewalDate: dateStr(now - 25 * day),

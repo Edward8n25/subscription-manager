@@ -11,7 +11,7 @@
   } else {
     var now = Date.now();
     var day = 86400000;
-    function dateStr(d) { return new Date(d).toISOString().slice(0, 10); }
+    function dateStr(d) { var t = new Date(d); function p(n) { return (n < 10 ? '0' : '') + n; } return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()); }
     var subs = [
       {
         id: 's1', name: 'Netflix', tag: '视频', serviceType: 'streaming',

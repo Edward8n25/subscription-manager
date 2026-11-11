@@ -29,6 +29,25 @@ t('N-01c README 热力图文案如实（不再称「密度一图看完」，改�
 t('N-02a 空态按钮无 inline onclick（双绑定断绝；绑定统一走 bindListEvents）', app.indexOf('onclick="window.__st.openNew()"') < 0 && app.indexOf('<button class="btn primary">+ 新增订阅</button>') >= 0);
 t('N-02b 空态按钮监听路径保留（.empty .btn.primary 渲染期绑定仍在）', app.indexOf("querySelector('.empty .btn.primary')") >= 0 && /emptyAddBtn[\s\S]{0,80}addEventListener\('click', openNew\)/.test(app));
 
+// ---- N-08 · price 无上限（D-06 残留：1e308 → "¥1e+308"）----
+t('N-08a 价格输入带上限属性 max=999999', app.indexOf('max="999999"') >= 0);
+t('N-08b 保存路径有价格上限校验与提示（表单按钮直读 value，原生 max 不拦截）', /data\.price > 999999/.test(app) && app.indexOf('价格超出上限') >= 0);
+
+// ---- N-09 · 「共 N 项」不随筛选（E-04 残留）----
+t('N-09a 列表计数区分筛选态（筛选中显示「筛出 X / 共 Y 项」）', /筛出 ' \+ filtered\.length \+ ' \/ 共 ' \+ subs\.length/.test(app) && /filterActive/.test(app));
+
+// ---- N-10 · UTC 日期残留（E-03：种子/导出文件名用 toISOString，凌晨偏一天）----
+const installBody = fnBody('installSeed') || '';
+t('N-10a installSeed 日期改本地拼接（无 toISOString）', !!installBody && installBody.indexOf('toISOString') < 0 && /getFullYear\(\) \+ '-' \+ pad2/.test(installBody));
+const seedHtml = read('tests/seed.html') || '';
+t('N-10b tests/seed.html 日期改本地拼接（与 installSeed 同源同步）', !!seedHtml && seedHtml.indexOf('toISOString') < 0 && /getFullYear\(\) \+ '-'/.test(seedHtml));
+t('N-10c 导出备份文件名用本地日期（todayISO）', app.indexOf("'subtrack-backup-' + todayISO()") >= 0);
+
+// ---- E-02 · 非法日期显示空白而非占位（残留：格式合法但不存在的日期，如 2026-02-30）----
+t('E-02a formatDateSafe 存在且 4 个续费日期展示点全部改用（def + 4 调用 ≥ 5）', /function formatDateSafe\(/.test(app) && (app.match(/formatDateSafe\(/g) || []).length >= 5);
+const dataModel = read('docs/data-model.md') || '';
+t('E-02b data-model.md price 注记上限（≤ 999999）', dataModel.indexOf('≤ 999999') >= 0);
+
 let pass = 0;
 results.forEach(([name, ok, detail]) => {
   console.log((ok ? '✅' : '❌') + ' ' + name + (detail ? '   → ' + detail : ''));

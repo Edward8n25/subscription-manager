@@ -18,7 +18,7 @@ localStorage['subtrack-v2'] = {        // 主 key
       paymentType: 'free' | 'monthly' | 'yearly' | 'oneTime',
       lastRenewalDate: 'YYYY-MM-DD' | '',
       nextRenewalDate: 'YYYY-MM-DD',
-      price: number,        // 元，非负
+      price: number,        // 元，非负且 ≤ 999999（上限由表单校验拒绝保存）
       billingCycle: 'monthly' | 'quarterly' | 'yearly' | 'custom',
       feeDetails: string,   // 备注（≤500 字）
       reminderRule: '7days' | '14days' | '30days' | 'none',
