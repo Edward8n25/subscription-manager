@@ -68,6 +68,17 @@ t('N-15a README 断言数与实测一致（batch 共 ' + batchCount + ' / 全部
   '实测 batch=' + batchCount + ' smoke=' + smokeCount + ' style=' + styleCount);
 t('N-15b README ES5 表述精确（含 ES2015 内置方法说明与 IE11 边界）', readme.indexOf('ES2015') >= 0 && readme.indexOf('不支持 IE11') >= 0);
 
+// ---- N-03 · 批次 F 对比度校准（数值判据在 tests/contrast-check.js 守门；这里锁结构与引用）----
+const html = read('index.html') || '';
+const style = html.slice(html.indexOf('<style>') + 7, html.indexOf('</style>'));
+t('F-a 语义小字 token 三件套存在（--danger/warning/success-text，浅深双主题各有定义）',
+  (style.match(/--danger-text:/g) || []).length >= 2 && (style.match(/--warning-text:/g) || []).length >= 2 && (style.match(/--success-text:/g) || []).length >= 2);
+t('F-b 月历 lv-3 改实色 accent + on-accent（tint-78 token 已移除）',
+  /\.cal-day\.lv-3\s*\{[^}]*background:\s*var\(--accent\)/.test(style) && /\.cal-day\.lv-3\s*\{[^}]*color:\s*var\(--on-accent\)/.test(style) && style.indexOf('--accent-tint-78') < 0);
+t('F-c 徽章三色改用 *-text token（11px 小字达标路径）',
+  /\.badge\.expired\s*\{[^}]*var\(--danger-text\)/.test(style) && /\.badge\.soon\s*\{[^}]*var\(--warning-text\)/.test(style) && /\.badge\.free\s*\{[^}]*var\(--success-text\)/.test(style));
+t('F-d CI 测试循环包含 contrast-check.js', yml.indexOf('tests/contrast-check.js') >= 0);
+
 let pass = 0;
 results.forEach(([name, ok, detail]) => {
   console.log((ok ? '✅' : '❌') + ' ' + name + (detail ? '   → ' + detail : ''));

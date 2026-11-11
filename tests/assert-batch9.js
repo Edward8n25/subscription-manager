@@ -19,21 +19,29 @@ const block = (sel) => {
   return style.slice(i, style.indexOf('}', i) + 1);
 };
 
-// ---- CSS · 三色 token 块（green = :root 基线不动）----
+// ---- CSS · 三色 token 块（green = :root + dark 基线；批次 F 起四配色浅/深双块，tint-78 移除）----
+const REQ_KEYS = ['--accent:', '--accent-hover:', '--on-accent:', '--accent-muted:', '--accent-tint-18:', '--accent-tint-45:'];
 t('CSS-a [data-accent="blue"] 定义 accent/hover/on-accent/muted/tint 全套', (() => {
   const b = block('[data-accent="blue"]');
-  return ['--accent:', '--accent-hover:', '--on-accent:', '--accent-muted:', '--accent-tint-18:', '--accent-tint-45:', '--accent-tint-78:'].every(k => b.indexOf(k) >= 0);
+  return REQ_KEYS.every(k => b.indexOf(k) >= 0);
 })());
 t('CSS-b [data-accent="purple"] 定义全套', (() => {
   const b = block('[data-accent="purple"]');
-  return ['--accent:', '--accent-hover:', '--on-accent:', '--accent-muted:', '--accent-tint-18:', '--accent-tint-45:', '--accent-tint-78:'].every(k => b.indexOf(k) >= 0);
+  return REQ_KEYS.every(k => b.indexOf(k) >= 0);
 })());
 t('CSS-c [data-accent="orange"] 定义全套', (() => {
   const b = block('[data-accent="orange"]');
-  return ['--accent:', '--accent-hover:', '--on-accent:', '--accent-muted:', '--accent-tint-18:', '--accent-tint-45:', '--accent-tint-78:'].every(k => b.indexOf(k) >= 0);
+  return REQ_KEYS.every(k => b.indexOf(k) >= 0);
 })());
-t('CSS-d dark 变体 ×3（muted 提透明度）', style.indexOf('[data-theme="dark"][data-accent="blue"]') >= 0 && style.indexOf('[data-theme="dark"][data-accent="purple"]') >= 0 && style.indexOf('[data-theme="dark"][data-accent="orange"]') >= 0);
-t('CSS-e 四色主色值与 data-model 预留一致（green/blue/purple/orange）', style.indexOf('#1db954') >= 0 && block('[data-accent="blue"]').indexOf('#1e90ff') >= 0 && block('[data-accent="purple"]').indexOf('#a45ee5') >= 0 && block('[data-accent="orange"]').indexOf('#ff7a45') >= 0);
+t('CSS-d dark 变体 ×3（accent/hover/on-accent/muted/tint 全套覆写）', ['blue', 'purple', 'orange'].every(c => REQ_KEYS.every(k => block('[data-theme="dark"][data-accent="' + c + '"]').indexOf(k) >= 0)));
+// 批次 F 契约变更：主色对齐 habit-quit-tracker 校准值（浅色深一档 / 深色亮一档），purple 同亮度带自校
+t('CSS-e 四色校准值与戒断工具一致（浅 #15803d/#2563eb/#9333ea/#c2410c，深 #1db954/#60a5fa/#c084fc/#f97316）', (() => {
+  const s = style;
+  return s.indexOf('#15803d') >= 0 && s.indexOf('#1db954') >= 0
+    && block('[data-accent="blue"]').indexOf('#2563eb') >= 0 && block('[data-theme="dark"][data-accent="blue"]').indexOf('#60a5fa') >= 0
+    && block('[data-accent="purple"]').indexOf('#9333ea') >= 0 && block('[data-theme="dark"][data-accent="purple"]').indexOf('#c084fc') >= 0
+    && block('[data-accent="orange"]').indexOf('#c2410c') >= 0 && block('[data-theme="dark"][data-accent="orange"]').indexOf('#f97316') >= 0;
+})());
 
 // ---- 非 green 配色下无绿色 rgba 残留（tint token 化的收益兑现）----
 t('CSS-f 三色块内无绿色 rgba(29,185,84 残留', ['blue', 'purple', 'orange'].every(c => {

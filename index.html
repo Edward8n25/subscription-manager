@@ -19,25 +19,30 @@
       --bg-card: #ffffff;
       --bg-input: #f1f1f1;
       --text: #121212;
-      --text-sub: #6a6a6a;
-      --text-mute: #9a9a9a;
+      /* 对比度校准（批次 F，对齐 habit-quit-tracker 2026-11-10 校准值）：--text-sub 7.7:1、--text-mute 4.8:1
+         （原 #6a6a6a 5.4 / #9a9a9a 2.8，后者在搜索占位/空态/统计标签等多处小字低于 WCAG AA 4.5:1） */
+      --text-sub: #52525b;
+      --text-mute: #71717a;
       --border: #e8e8e8;
       --border-muted: #f0f0f0;
-      --accent: #1db954;          /* Spotify 绿 */
-      --accent-hover: #1ed760;
-      --accent-muted: rgba(29, 185, 84, 0.12);
+      /* 浅色 accent 用深一档：原 #1db954 白底仅 2.6:1，当文字/按钮都不达标（对齐戒断工具校准） */
+      --accent: #15803d;          /* 经典绿（原 Spotify 绿加深） */
+      --accent-hover: #166534;
+      --accent-muted: rgba(21, 128, 61, 0.08);
       --danger: #e22134;
       --danger-hover: #f15e6c;
       --danger-muted: rgba(226, 33, 52, 0.15);
-      --warning: #d29922;
+      --danger-text: #b91c1c;           /* 徽章等 11px 小字用深字（habit 模式：亮 tint 底 + 深语义字） */
+      --warning: #b45309;               /* 原 #d29922 作 22px 大字仅 2.5:1，不达标 */
       --warning-muted: rgba(210, 153, 34, 0.12);
+      --warning-text: #92400e;
       --success: #1a7f37;
       --success-muted: rgba(63, 185, 80, 0.15);
-      --on-accent: #062b14;             /* 绿底文字（规范 §8.1，替代纯黑） */
-      --text-on-tint: #ffffff;          /* 深 tint 底反白文字（热力图 lv-2/3） */
-      --accent-tint-18: rgba(29, 185, 84, 0.18);   /* 日历色阶 lv-1 */
-      --accent-tint-45: rgba(29, 185, 84, 0.45);   /* 日历色阶 lv-2 */
-      --accent-tint-78: rgba(29, 185, 84, 0.78);   /* 日历色阶 lv-3 */
+      --success-text: #166534;
+      --on-accent: #ffffff;             /* 浅色 accent 已加深，白字 5.0:1；深色模式在下方单独覆写 */
+      --text-on-tint: #121212;          /* 月历 tint 格文字：浅色 tint 底配深字（白字仅 1.5–2.1:1） */
+      --accent-tint-18: rgba(21, 128, 61, 0.18);   /* 日历色阶 lv-1 */
+      --accent-tint-45: rgba(21, 128, 61, 0.45);   /* 日历色阶 lv-2（lv-3 改实色 --accent + --on-accent，tint-78 移除） */
       --shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
       --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
       --shadow-up: 0 -2px 12px rgba(0,0,0,.08);    /* 底栏浮起态：方向向上 */
@@ -55,19 +60,28 @@
       --bg-input: #282828;
       --text: #ffffff;
       --text-sub: #b3b3b3;
-      --text-mute: #6a6a6a;
+      --text-mute: #8a8a8a;             /* 原 #6a6a6a 深底 3.5:1 不达标，提到 5.4:1 */
       --border: #282828;
       --border-muted: #1f1f1f;
-      --accent: #1db954;
+      --accent: #1db954;                /* 深色用亮一档：原值在深底表现最好，保留 */
       --accent-hover: #1ed760;
       --accent-muted: rgba(29, 185, 84, 0.18);
+      /* 深色 tint 必须显式覆写：浅色已换成深绿 rgba(21,128,61,…) */
+      --accent-tint-18: rgba(29, 185, 84, 0.18);
+      --accent-tint-45: rgba(29, 185, 84, 0.45);
+      /* 深色 accent 是亮绿，必须配深色字（白字仅 2.6:1）；浅色已在 :root 改白字，此处显式覆写 */
+      --on-accent: #062b14;
+      --text-on-tint: #ffffff;
       --danger: #f15e6c;
       --danger-hover: #ff6b7a;
       --danger-muted: rgba(226, 33, 52, 0.15);
+      --danger-text: #f15e6c;
       --warning: #e5c07b;
       --warning-muted: rgba(229, 192, 123, 0.18);
+      --warning-text: #e5c07b;
       --success: #98c379;
       --success-muted: rgba(152, 195, 121, 0.18);
+      --success-text: #98c379;
       --shadow: 0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
       --shadow-lg: 0 8px 24px rgba(0,0,0,.5);
       --tap: rgba(255,255,255,.06);
@@ -296,9 +310,9 @@
       font-size: 11px; font-weight: 600;
       border-radius: var(--radius-pill);
     }
-    .badge.free { color: var(--success); background: var(--success-muted); }
-    .badge.expired { color: var(--danger); background: var(--danger-muted); }
-    .badge.soon { color: var(--warning); background: var(--warning-muted); }
+    .badge.free { color: var(--success-text); background: var(--success-muted); }
+    .badge.expired { color: var(--danger-text); background: var(--danger-muted); }
+    .badge.soon { color: var(--warning-text); background: var(--warning-muted); }
 
     /* 备注 */
     .card-note {
@@ -357,47 +371,66 @@
       animation: fadeIn .15s;
     }
     [data-theme="dark"] .modal-back { background: rgba(0,0,0,.7); }
-    /* ============== 配色方案（设置内切换；借鉴 habit-quit-tracker data-accent 机制） ============== */
+    /* ============== 配色方案（设置内切换；借鉴 habit-quit-tracker data-accent 机制，色值对齐其 2026-11-10 校准） ============== */
     /* 只动 accent 系 token，背景/文字保持中性；green = 基线（:root + dark 现值）不动；
-       主色取 data-model.md 预留 ACCENTS（green/blue/purple/orange），tint token 化保证换色零残留 */
+       浅色一律深一档（白底可作文字 ≥4.5）、深色一律亮一档（深底可作文字）；
+       亮度带四色对齐（contrast-check.js LUM_BANDS 守门），purple 无戒断工具对应色，按同一亮度带自校 */
     [data-accent="blue"] {
-      --accent: #1e90ff;
-      --accent-hover: #45a3ff;
-      --on-accent: #06214d;
-      --accent-muted: rgba(30, 144, 255, 0.12);
-      --accent-tint-18: rgba(30, 144, 255, 0.18);
-      --accent-tint-45: rgba(30, 144, 255, 0.45);
-      --accent-tint-78: rgba(30, 144, 255, 0.78);
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --on-accent: #ffffff;
+      --accent-muted: rgba(37, 99, 235, 0.08);
+      --accent-tint-18: rgba(37, 99, 235, 0.18);
+      --accent-tint-45: rgba(37, 99, 235, 0.45);
+    }
+    [data-theme="dark"][data-accent="blue"] {
+      --accent: #60a5fa;
+      --accent-hover: #93c5fd;
+      --on-accent: #0a1929;
+      --accent-muted: rgba(96, 165, 250, 0.18);
+      --accent-tint-18: rgba(96, 165, 250, 0.18);
+      --accent-tint-45: rgba(96, 165, 250, 0.45);
     }
     [data-accent="purple"] {
-      --accent: #a45ee5;
-      --accent-hover: #b679ec;
-      --on-accent: #2a1045;
-      --accent-muted: rgba(164, 94, 229, 0.12);
-      --accent-tint-18: rgba(164, 94, 229, 0.18);
-      --accent-tint-45: rgba(164, 94, 229, 0.45);
-      --accent-tint-78: rgba(164, 94, 229, 0.78);
+      --accent: #9333ea;
+      --accent-hover: #7e22ce;
+      --on-accent: #ffffff;
+      --accent-muted: rgba(147, 51, 234, 0.08);
+      --accent-tint-18: rgba(147, 51, 234, 0.18);
+      --accent-tint-45: rgba(147, 51, 234, 0.45);
+    }
+    [data-theme="dark"][data-accent="purple"] {
+      --accent: #c084fc;
+      --accent-hover: #d8b4fe;
+      --on-accent: #1e1033;
+      --accent-muted: rgba(192, 132, 252, 0.18);
+      --accent-tint-18: rgba(192, 132, 252, 0.18);
+      --accent-tint-45: rgba(192, 132, 252, 0.45);
     }
     [data-accent="orange"] {
-      --accent: #ff7a45;
-      --accent-hover: #ff8f61;
-      --on-accent: #3d1607;
-      --accent-muted: rgba(255, 122, 69, 0.12);
-      --accent-tint-18: rgba(255, 122, 69, 0.18);
-      --accent-tint-45: rgba(255, 122, 69, 0.45);
-      --accent-tint-78: rgba(255, 122, 69, 0.78);
+      --accent: #c2410c;
+      --accent-hover: #9a3412;
+      --on-accent: #ffffff;
+      --accent-muted: rgba(194, 65, 12, 0.08);
+      --accent-tint-18: rgba(194, 65, 12, 0.18);
+      --accent-tint-45: rgba(194, 65, 12, 0.45);
     }
-    [data-theme="dark"][data-accent="blue"] { --accent-muted: rgba(30, 144, 255, 0.18); }
-    [data-theme="dark"][data-accent="purple"] { --accent-muted: rgba(164, 94, 229, 0.18); }
-    [data-theme="dark"][data-accent="orange"] { --accent-muted: rgba(255, 122, 69, 0.18); }
+    [data-theme="dark"][data-accent="orange"] {
+      --accent: #f97316;
+      --accent-hover: #fb923c;
+      --on-accent: #2a1205;
+      --accent-muted: rgba(249, 115, 22, 0.18);
+      --accent-tint-18: rgba(249, 115, 22, 0.18);
+      --accent-tint-45: rgba(249, 115, 22, 0.45);
+    }
     /* 设置面板的配色选择行 */
     .accent-row { display: flex; gap: 8px; }
     .accent-row .btn { flex: 1; justify-content: center; }
     .accent-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
-    .dot-green { background: #1db954; }
-    .dot-blue { background: #1e90ff; }
-    .dot-purple { background: #a45ee5; }
-    .dot-orange { background: #ff7a45; }
+    .dot-green { background: #15803d; }
+    .dot-blue { background: #2563eb; }
+    .dot-purple { background: #9333ea; }
+    .dot-orange { background: #c2410c; }
     .modal {
       background: var(--bg-card);
       width: 100%; max-width: 480px;
@@ -613,7 +646,7 @@
     .cal-day.lv-0 { background: transparent; }
     .cal-day.lv-1 { background: var(--accent-tint-18); color: var(--text); font-weight: 600; }
     .cal-day.lv-2 { background: var(--accent-tint-45); color: var(--text-on-tint); font-weight: 700; }
-    .cal-day.lv-3 { background: var(--accent-tint-78); color: var(--text-on-tint); font-weight: 700; }
+    .cal-day.lv-3 { background: var(--accent); color: var(--on-accent); font-weight: 700; }
     .cal-legend {
       display: flex; align-items: center; gap: 8px;
       margin-top: 12px;
@@ -626,7 +659,7 @@
     .cal-legend .swatch.lv-0 { background: var(--bg-elev); }
     .cal-legend .swatch.lv-1 { background: var(--accent-tint-18); }
     .cal-legend .swatch.lv-2 { background: var(--accent-tint-45); }
-    .cal-legend .swatch.lv-3 { background: var(--accent-tint-78); }
+    .cal-legend .swatch.lv-3 { background: var(--accent); }
 
     /* 年热力图（原 JS 内联样式收敛） */
     .heat-col { display: flex; flex-direction: column; gap: 2px; }

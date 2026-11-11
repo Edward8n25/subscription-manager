@@ -15,15 +15,20 @@ const t = (name, ok, detail) => results.push([name, ok, detail || '']);
 const count = (re, src) => (src.match(re) || []).length;
 
 // ---- U-01 · 着色元素走 tint token ----
-t('U-01a tint token 四件套定义', style.indexOf('--accent-tint-18:') >= 0 && style.indexOf('--accent-tint-45:') >= 0 && style.indexOf('--accent-tint-78:') >= 0 && style.indexOf('--danger-muted:') >= 0);
-// 绿色 rgba 全部收进 token 定义区（accent-muted 浅/深 + tint ×3 = 5 处），规则体内零字面量
-t('U-01b 绿色 rgba 仅存于 token 定义（5 处）', count(/rgba\(29, ?185, ?84/g, style) === 5, '当前 ' + count(/rgba\(29, ?185, ?84/g, style));
+// 批次 F 契约变更（2026-11-12）：色值对齐 habit-quit-tracker 校准——浅色基线绿改 #15803d（rgba(21,128,61)），
+// 深色保留 #1db954（rgba(29,185,84)）；--accent-tint-78 移除（lv-3 改实色 accent + on-accent）。
+t('U-01a tint token 定义（tint-18/45 + danger-muted；tint-78 已随批次 F 移除）', style.indexOf('--accent-tint-18:') >= 0 && style.indexOf('--accent-tint-45:') >= 0 && style.indexOf('--danger-muted:') >= 0 && style.indexOf('--accent-tint-78') < 0);
+// 绿色 rgba 仅存 token 定义区：浅色 rgba(21,128,61 恰 3 处（muted/tint-18/tint-45）、深色 rgba(29,185,84 恰 3 处
+// （先剥 /* */ 注释——注释文本提到色值字面量会被误判，同 style-consistency 的既有教训）
+const styleCode7 = style.replace(/\/\*[\s\S]*?\*\//g, '');
+t('U-01b 绿色 rgba 仅存 token 定义（浅 21,128,61 ×3 + 深 29,185,84 ×3）', count(/rgba\(21, ?128, ?61/g, styleCode7) === 3 && count(/rgba\(29, ?185, ?84/g, styleCode7) === 3, '浅 ' + count(/rgba\(21, ?128, ?61/g, styleCode7) + ' / 深 ' + count(/rgba\(29, ?185, ?84/g, styleCode7));
 t('U-01c 日历色阶/图例/过期徽章全走 var()', !/\.cal-day\.lv-\d\s*{[^}]*rgba/.test(style) && !/\.swatch\.lv-\d\s*{[^}]*rgba/.test(style) && style.indexOf('var(--danger-muted)') >= 0);
 
 // ---- U-02 · 纯黑清零 / 反白 token ----
 t('U-02a #000 字面量清零', count(/#000\b/g, style) === 0);
 t('U-02b --on-accent 定义且按钮/勾标使用', style.indexOf('--on-accent:') >= 0 && count(/var\(--on-accent\)/g, style) >= 2);
-t('U-02c 深 tint 反白走 --text-on-tint（#fff 规则体清零）', style.indexOf('--text-on-tint:') >= 0 && count(/#fff\b/g, style) === 0 && count(/var\(--text-on-tint\)/g, style) >= 2);
+// 批次 F 契约变更：lv-3 改实色 accent + --on-accent，--text-on-tint 仅剩 lv-2 一处使用
+t('U-02c --text-on-tint 定义且 lv-2 使用（批次 F 后仅 1 处）', style.indexOf('--text-on-tint:') >= 0 && count(/var\(--text-on-tint\)/g, style) >= 1);
 
 // ---- U-03 · JS 内联仅剩动态 grid ----
 t('U-03 JS 内联仅剩动态 grid-template-columns（1 处）', count(/\sstyle=\\?"/g, app) === 1 && app.indexOf("style=\"grid-template-columns") >= 0);

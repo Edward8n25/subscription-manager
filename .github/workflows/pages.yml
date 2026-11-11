@@ -29,7 +29,7 @@ jobs:
         run: node --check src/app.js
       - name: Run test suites
         run: |
-          for f in tests/smoke-test.js tests/style-consistency.js tests/assert-batch*.js; do
+          for f in tests/smoke-test.js tests/style-consistency.js tests/contrast-check.js tests/assert-batch*.js; do
             echo "== $f =="
             node "$f"
           done

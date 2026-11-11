@@ -1171,7 +1171,7 @@
       + '<div class="section-title flush">配色</div>'
       + '<div class="accent-row">'
       + ACCENT_LIST.map(function (c) {
-          var names = { green: 'Spotify 绿', blue: '亮蓝', purple: '蔷薇紫', orange: '落日橙' };
+          var names = { green: '经典绿', blue: '深海蓝', purple: '蔷薇紫', orange: '落日橙' };
           return '<button class="btn" data-act="accent" data-accent-name="' + c + '">'
                + '<span class="accent-dot dot-' + c + '"></span>' + names[c] + '</button>';
         }).join('')

@@ -77,7 +77,9 @@ function loadApp(preset, hash) {
 
 const results = [];
 const day = 86400000;
-function iso(ts) { return new Date(ts).toISOString().slice(0, 10); }
+// 本地日期（非 UTC toISOString）：UTC 写法在本地 0–8 点（UTC+8）会拿到「昨天」，
+// 让「今天到期 → 即将续费」用例在午夜后翻车（N-05 同源缺陷咬了夹具自己）
+function iso(ts) { var d = new Date(ts); function p(n) { return (n < 10 ? '0' : '') + n; } return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
 function sub(over) {
   return Object.assign({
     id: 't1', name: '测试订阅', tag: '测试', serviceType: 'streaming',
