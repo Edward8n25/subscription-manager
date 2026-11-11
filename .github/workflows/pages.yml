@@ -15,10 +15,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # N-06：测试门——语法检查 + 全部断言套件，红灯不部署
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax check
+        run: node --check src/app.js
+      - name: Run test suites
+        run: |
+          for f in tests/smoke-test.js tests/style-consistency.js tests/assert-batch*.js; do
+            echo "== $f =="
+            node "$f"
+          done
+
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

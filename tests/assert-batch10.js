@@ -48,6 +48,12 @@ t('E-02a formatDateSafe 存在且 4 个续费日期展示点全部改用（def +
 const dataModel = read('docs/data-model.md') || '';
 t('E-02b data-model.md price 注记上限（≤ 999999）', dataModel.indexOf('≤ 999999') >= 0);
 
+// ---- N-06 · CI 部署无测试门（回归可直达生产）----
+const yml = read('.github/workflows/pages.yml') || '';
+t('N-06a pages.yml 存在 test job（checkout + setup-node）', yml.indexOf('\n  test:') >= 0 && yml.indexOf('actions/setup-node@v4') >= 0);
+t('N-06b test job 跑语法检查与全部套件（node --check + smoke/style/assert-batch*）', /node --check src\/app\.js/.test(yml) && /tests\/smoke-test\.js/.test(yml) && /assert-batch\*\.js/.test(yml));
+t('N-06c deploy 依赖 test（needs: test，红灯不部署）', /needs:\s*test/.test(yml));
+
 let pass = 0;
 results.forEach(([name, ok, detail]) => {
   console.log((ok ? '✅' : '❌') + ' ' + name + (detail ? '   → ' + detail : ''));

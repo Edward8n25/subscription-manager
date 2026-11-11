@@ -34,6 +34,11 @@
 - **文档**：`docs/data-model.md` price 字段注记上限（≤ 999999）。
 - **测试**：`assert-batch10` 新增 8 条断言（N-08a/b、N-09a、N-10a/b/c、E-02a/b）；**反向验证记录**：修复前 5/13（新增 8 条全红），修复后 13/13，回归零退化。
 
+#### 批次 D · CI 质量门（N-06，S2）
+
+- **行为修正声明（仓库级）**：`pages.yml` 新增 `test` job（checkout → setup-node 20 → `node --check src/app.js` → 循环跑 smoke / style-consistency / assert-batch* 全部套件），`deploy` 加 `needs: test`——**红灯不部署**。此前 push 直达 Pages，135 项断言不进门禁，回归可静默上线。
+- **测试**：`assert-batch10` 新增 3 条断言（N-06a/b/c）；**反向验证记录**：修复前 13/16（N-06 三条全红），修复后 16/16，回归零退化。局限（如实记录）：Actions 实跑验证（含故意红灯拦截演练）需 push 后在 GitHub Actions 页观察，归发布核验清单。
+
 ### 计划中 · UI 按规范 v4 升级（2026-11-11，仅评估，未动代码）
 
 **状态**：已产出「左原版 / 右升级版」对照 demo；本项目代码一行未改。
