@@ -25,6 +25,10 @@ t('N-01a renderYearHeatmap 不再用 future 遮罩置空（future ? 0 模式移�
 t('N-01b renderYearHeatmap 内无 future 残留引用（变量连同声明清除）', !!heatBody && !/\bfuture\b/.test(heatBody), '残留: ' + (heatBody.match(/\bfuture\b/g) || []).length + ' 处');
 t('N-01c README 热力图文案如实（不再称「密度一图看完」，改「续费与到期分布」）', readme.indexOf('全年续费密度一图看完') < 0 && readme.indexOf('到期分布') >= 0);
 
+// ---- N-02 · 空态「+ 新增订阅」双绑定（S2：inline onclick 与 addEventListener 各触发一次 → 弹窗叠两层）----
+t('N-02a 空态按钮无 inline onclick（双绑定断绝；绑定统一走 bindListEvents）', app.indexOf('onclick="window.__st.openNew()"') < 0 && app.indexOf('<button class="btn primary">+ 新增订阅</button>') >= 0);
+t('N-02b 空态按钮监听路径保留（.empty .btn.primary 渲染期绑定仍在）', app.indexOf("querySelector('.empty .btn.primary')") >= 0 && /emptyAddBtn[\s\S]{0,80}addEventListener\('click', openNew\)/.test(app));
+
 let pass = 0;
 results.forEach(([name, ok, detail]) => {
   console.log((ok ? '✅' : '❌') + ' ' + name + (detail ? '   → ' + detail : ''));

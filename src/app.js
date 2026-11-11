@@ -420,8 +420,8 @@
              + '  <div class="em">📦</div>'
              + '  <h3>还没有订阅</h3>'
              + '  <p>把第一个订阅加进来吧</p>'
-             + '  <button class="btn primary" onclick="window.__st.openNew()">+ 新增订阅</button>'
-             + '</div>';
+      + '  <button class="btn primary">+ 新增订阅</button>'
+      + '</div>';
       } else {
         html += '<div class="empty"><div class="em">🔍</div><h3>没找到匹配的订阅</h3><p>试试别的关键词或标签</p></div>';
       }
