@@ -39,6 +39,14 @@
 - **行为修正声明（仓库级）**：`pages.yml` 新增 `test` job（checkout → setup-node 20 → `node --check src/app.js` → 循环跑 smoke / style-consistency / assert-batch* 全部套件），`deploy` 加 `needs: test`——**红灯不部署**。此前 push 直达 Pages，135 项断言不进门禁，回归可静默上线。
 - **测试**：`assert-batch10` 新增 3 条断言（N-06a/b/c）；**反向验证记录**：修复前 13/16（N-06 三条全红），修复后 16/16，回归零退化。局限（如实记录）：Actions 实跑验证（含故意红灯拦截演练）需 push 后在 GitHub Actions 页观察，归发布核验清单。
 
+#### 批次 E · README 精度修正（N-15）
+
+- **断言数宣称修正**：README「共 93 项」（batch2~9）/「共 133 项」为 SW-REG/SW-SCOPE 补断言前的过期数字——实测 batch2~10 共 **113 项**、全部 **153 项**（batch 113 + smoke 32 + style 8）；目录树同步改 `assert-batch2~10.js`，style-consistency 注记「可进 CI」→「已进 CI」（批次 D 落地）。
+- **ES5 表述精确化**：「单文件 IIFE，ES5」→「ES5 语法 + ES2015 内置方法如 Object.assign / Array.find，不支持 IE11」（语法确为 ES5，但内置方法是 ES2015，原表述会让读者误判兼容边界）。
+- **1.0.0 时点数字回填**：该节断言数改注「1.0.0 时点共 119 项」；新增「已完成（第 2 轮盘点修复 · 批次 A~E，2026-11-11）」小节。
+- **守门方式改进**：assert-batch10 的 N-15a 为**自计算比对**（直接数 tests/ 下真实断言条数与 README 宣称核对），后续批次增删断言不会让该断言过期。
+- **测试**：`assert-batch10` 新增 2 条断言（N-15a/b）；**反向验证记录**：修复前 16/18（N-15 两条红），修复后 18/18，回归零退化。
+
 ### 计划中 · UI 按规范 v4 升级（2026-11-11，仅评估，未动代码）
 
 **状态**：已产出「左原版 / 右升级版」对照 demo；本项目代码一行未改。

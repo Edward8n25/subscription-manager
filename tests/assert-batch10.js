@@ -54,6 +54,20 @@ t('N-06a pages.yml 存在 test job（checkout + setup-node）', yml.indexOf('\n 
 t('N-06b test job 跑语法检查与全部套件（node --check + smoke/style/assert-batch*）', /node --check src\/app\.js/.test(yml) && /tests\/smoke-test\.js/.test(yml) && /assert-batch\*\.js/.test(yml));
 t('N-06c deploy 依赖 test（needs: test，红灯不部署）', /needs:\s*test/.test(yml));
 
+// ---- N-15 · README 断言数宣称过期（93/133）+ ES5 表述不精确（Object.assign/find 为 ES2015）----
+// 断言数自计算：直接数 tests/ 下真实断言条数与 README 宣称比对，批次增删断言不会让本断言过期
+const testFiles = fs.readdirSync(path.join(ROOT, 'tests')).filter(f => /^assert-batch\d+\.js$/.test(f)).sort();
+let batchCount = 0;
+testFiles.forEach(f => { batchCount += ((read('tests/' + f) || '').match(/^t\(/gm) || []).length; });
+const smokeCount = ((read('tests/smoke-test.js') || '').match(/^results\.push\(\[/gm) || []).length;
+const styleCount = ((read('tests/style-consistency.js') || '').match(/^results\.push\(\[/gm) || []).length;
+const totalCount = batchCount + smokeCount + styleCount;
+t('N-15a README 断言数与实测一致（batch 共 ' + batchCount + ' / 全部 ' + totalCount + '；93 与 133 清除）',
+  readme.indexOf('共 93 项') < 0 && readme.indexOf('133 项断言') < 0
+  && readme.indexOf('共 ' + batchCount + ' 项') >= 0 && readme.indexOf(totalCount + ' 项断言') >= 0,
+  '实测 batch=' + batchCount + ' smoke=' + smokeCount + ' style=' + styleCount);
+t('N-15b README ES5 表述精确（含 ES2015 内置方法说明与 IE11 边界）', readme.indexOf('ES2015') >= 0 && readme.indexOf('不支持 IE11') >= 0);
+
 let pass = 0;
 results.forEach(([name, ok, detail]) => {
   console.log((ok ? '✅' : '❌') + ' ' + name + (detail ? '   → ' + detail : ''));

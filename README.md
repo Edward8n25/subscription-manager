@@ -174,7 +174,7 @@ URL 参数（开发 / 演示用）：
 
 - 纯 HTML + 原生 JavaScript（**零依赖、零构建**）
 - 全部 CSS 内联在 `index.html`（设计 token 体系：色彩语义 / 间距六档 / 圆角 / 阴影，棘轮守门）
-- 全部业务逻辑在 `src/app.js`（约 1400 行单文件 IIFE，ES5）
+- 全部业务逻辑在 `src/app.js`（约 1400 行单文件 IIFE，ES5 语法 + ES2015 内置方法如 Object.assign / Array.find，不支持 IE11）
 - PWA：Web App Manifest + Service Worker（导航与静态资源均 network-first + 缓存回退，兼顾发版生效与离线可用）
 - 兼容：Chrome / Edge / Safari / Firefox 最近 2 个大版本，iOS Safari 15+
 
@@ -206,8 +206,8 @@ subscription-manager/
 │
 ├── tests/
 │   ├── smoke-test.js       ← 冒烟测试（32 项断言，`node tests/smoke-test.js` 运行）
-│   ├── style-consistency.js ← 样式守门棘轮（死 CSS / 失配类名 / Token 阈值，可进 CI）
-│   └── assert-batch2~9.js  ← 各批次修复与功能的静态断言（共 93 项）
+│   ├── style-consistency.js ← 样式守门棘轮（死 CSS / 失配类名 / Token 阈值，已进 CI）
+│   └── assert-batch2~10.js ← 各批次修复与功能的静态断言（共 113 项）
 │
 ├── CHANGELOG.md
 ├── LICENSE
@@ -218,12 +218,20 @@ subscription-manager/
 
 ## 🗺️ 开发计划
 
+### 已完成（第 2 轮盘点修复 · 批次 A~E，2026-11-11）
+
+- [x] **年热力图未来遮罩**（S1）：未来续费日正常着色，README 宣称如实化
+- [x] **空态弹窗双触发**：新增订阅只开一层
+- [x] **P3 残留**：价格上限 / 筛选计数 / UTC 日期 / 无效日期兜底
+- [x] **CI 测试门**：断言红灯不部署
+- [x] 测试体系增量：assert-batch10 新增 18 条断言（N-01~N-15），当前共 **153 项断言**（详见 CHANGELOG）
+
 ### 已完成（1.0.0，2026-10-25）
 
 - [x] **全量盘点 + 分批修复**：数据层（导入消毒管道 / 备份双写 / 旧版迁移）、Service Worker（cache-first 改 network-first，发版可更新）、安全（onclick 注入面清零）、交互（弹窗栈 / 防误关 / Enter 接管 / toast 单例）、状态机（日历子状态复位 / 滚动位置记忆 / 折算口径统一）、UI 一致性（间距 / 圆角 / 阴影 / 内联全部 token 化，棘轮守门）
 - [x] **四色配色**：Spotify 绿 / 亮蓝 / 蔷薇紫 / 落日橙
 - [x] **a11y 补齐**：弹窗 role / aria / 焦点管理、`prefers-reduced-motion` 动效降级、viewport 恢复缩放
-- [x] 测试体系：冒烟 + 各批次静态断言 + 样式棘轮，共 **133 项断言**
+- [x] 测试体系：冒烟 + 各批次静态断言 + 样式棘轮（1.0.0 时点共 119 项；当前数字见上节）
 
 ### 下一步（候选，按 ROI 排序）
 
