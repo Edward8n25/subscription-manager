@@ -1294,6 +1294,9 @@
     else if (saved === 'light') dark = false;
     else dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    // N-17：theme-color 跟随主题（此前固定深色，浅色主题下移动端地址栏/状态栏颜色不符）
+    var metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', dark ? '#121212' : '#ffffff');
     // 配色方案：只换 accent 系 token（green 为基线，非法值回落默认）——与主题一次刷
     var accent = 'green';
     try { accent = localStorage.getItem(ACCENT_KEY) || 'green'; } catch (e) {}

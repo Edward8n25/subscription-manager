@@ -157,7 +157,7 @@
       color: var(--text);
       border-radius: var(--radius-pill);
       padding: 12px 16px 12px 36px;
-      font-size: 14px;
+      font-size: 16px;              /* N-04：<16px 会触发 iOS Safari 聚焦自动放大 */
       outline: none;
       transition: border-color .12s;
     }
@@ -228,7 +228,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-pill);
       padding: 8px 12px;
-      font-size: 13px;
+      font-size: 16px;              /* N-04：<16px 会触发 iOS Safari 聚焦自动放大 */
       cursor: pointer;
       outline: none;
     }
@@ -471,7 +471,7 @@
       color: var(--text);
       border-radius: var(--radius-sm);
       padding: 12px 16px;
-      font-size: 15px;
+      font-size: 16px;              /* N-04：<16px 会触发 iOS Safari 聚焦自动放大 */
       outline: none;
       transition: border-color .12s;
     }
