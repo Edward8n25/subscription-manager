@@ -885,7 +885,6 @@
         var idx = w * 7 + r;
         var ts = alignedStart.getTime() + idx * 86400000;
         var day = new Date(ts);
-        var future = ts > Date.now();
         var inYear = day.getFullYear() === now.getFullYear();
         if (!inYear) {
           html += '<div class="cal-day muted heat-cell"></div>';
@@ -893,9 +892,8 @@
         }
         var key = day.getFullYear() + '-' + pad2(day.getMonth() + 1) + '-' + pad2(day.getDate());
         var count = recordMap[key] ? recordMap[key].length : 0;
-        var level = future ? 0 : heatLevel(count);
+        var level = heatLevel(count);
         var cls = 'cal-day lv-' + level;
-        if (future) cls += ' muted';
         html += '<div class="' + cls + ' heat-cell" title="' + esc(key) + (count ? ' · ' + count + ' 次' : '') + '"></div>';
       }
       html += '</div>';
