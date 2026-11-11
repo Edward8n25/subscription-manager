@@ -3,7 +3,7 @@
    - 单文件 IIFE，零依赖
    - 主题：浅/深 + Spotify 绿主色
    - 数据：localStorage
-   - 功能：CRUD / 搜索 / 标签筛选 / 排序 / 批量操作 / 日历 / 统计 / 导入导出
+   - 功能：CRUD / 搜索 / 标签筛选 / 排序 / 日历 / 统计 / 导入导出
    ========================================================================= */
 
 (function () {
@@ -228,13 +228,6 @@
     saveState();
   }
 
-  function deleteSubscriptions(ids) {
-    var set = { };
-    ids.forEach(function (id) { set[id] = true; });
-    state.subscriptions = state.subscriptions.filter(function (s) { return !set[s.id]; });
-    saveState();
-  }
-
   function duplicateSubscription(id) {
     var orig = getById(id);
     if (!orig) return null;
@@ -248,14 +241,6 @@
     state.subscriptions.push(copy);
     saveState();
     return copy;
-  }
-
-  function updateOrder(orderedIds) {
-    orderedIds.forEach(function (id, i) {
-      var s = getById(id);
-      if (s) s.order = i;
-    });
-    saveState();
   }
 
   // ============== 工具 ==============
@@ -370,7 +355,6 @@
   var detailId = null;
   var calMonthOffset = 0;
   var calView = 'month'; // 'month' | 'year'
-  var selectedIds = {}; // Set 模拟
   var searchInputDebounce = null;
 
   function render() {
@@ -441,15 +425,6 @@
       html += '</div>';
     }
 
-    // 批量操作栏（按需显示）
-    if (Object.keys(selectedIds).length > 0) {
-      html += '<div class="batch-actions">'
-           + '  <div class="info">已选 <b>' + Object.keys(selectedIds).length + '</b> 项</div>'
-           + '  <button class="btn ghost small" id="cancelSelectBtn">取消</button>'
-           + '  <button class="btn danger small" id="batchDeleteBtn">删除</button>'
-           + '</div>';
-    }
-
     main.innerHTML = html;
     bindListEvents();
   }
@@ -482,7 +457,6 @@
   }
 
   function renderCard(s) {
-    var selected = !!selectedIds[s.id];
     var expiredClass = isExpired(s.nextRenewalDate) ? 'expired' : (isExpiringSoon(s.nextRenewalDate) ? 'soon' : '');
     var free = s.paymentType === 'free';
     var priceText = free ? '免费' : '¥' + (s.price || 0).toFixed(2);
@@ -494,7 +468,7 @@
     else if (isExpiringSoon(s.nextRenewalDate)) badges += '<span class="badge soon">即将续费</span>';
 
     var html = ''
-      + '<article class="subscription-card' + (selected ? ' selected' : '') + '" data-id="' + esc(s.id) + '">'
+      + '<article class="subscription-card" data-id="' + esc(s.id) + '">'
       + '  <div class="card-head">'
       + '    <div class="card-icon">' + getServiceIcon(s.serviceType) + '</div>'
       + '    <div class="card-title">' + esc(s.name) + '</div>'
@@ -572,12 +546,6 @@
     if (cardList) {
       cardList.addEventListener('click', handleCardClick);
     }
-
-    // 批量操作
-    var cancelBtn = main.querySelector('#cancelSelectBtn');
-    if (cancelBtn) cancelBtn.addEventListener('click', clearSelection);
-    var batchDel = main.querySelector('#batchDeleteBtn');
-    if (batchDel) batchDel.addEventListener('click', batchDelete);
   }
 
   function handleCardClick(e) {
@@ -596,31 +564,6 @@
     var cid = card.getAttribute('data-id');
     // 进入详情
     openDetail(cid);
-  }
-
-  function clearSelection() {
-    selectedIds = {};
-    render();
-  }
-
-  function batchDelete() {
-    var ids = Object.keys(selectedIds);
-    if (ids.length === 0) return;
-    showModal('批量删除', ''
-      + '<p class="modal-tip">将永久删除选中的 <b>' + ids.length + '</b> 个订阅，此操作不可撤销。</p>'
-      + '<div class="modal-actions">'
-      + '  <button class="btn ghost" onclick="window.__st.closeModal()">取消</button>'
-      + '  <button class="btn danger" id="qt-confirm">确认删除</button>'
-      + '</div>',
-      function (back) {
-        back.querySelector('#qt-confirm').addEventListener('click', function () {
-          deleteSubscriptions(ids);
-          selectedIds = {};
-          closeModal();
-          render();
-          toast('已删除 ' + ids.length + ' 个订阅', 'success');
-        });
-      });
   }
 
   // ============== 详情页 ==============

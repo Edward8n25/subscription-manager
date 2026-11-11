@@ -37,8 +37,9 @@ t('U-03 JS 内联仅剩动态 grid-template-columns（1 处）', count(/\sstyle=
 t('U-05a 裸 px 圆角清零', count(/border-radius:\s*(?!var\(|50%)[0-9.]+px/g, style) === 0);
 t('U-05b --radius-xs/--radius-lg token 定义并使用', style.indexOf('--radius-xs:') >= 0 && style.indexOf('--radius-lg:') >= 0 && count(/var\(--radius-xs\)/g, style) >= 3 && count(/var\(--radius-lg\)/g, style) >= 2);
 
-// ---- U-06 · 阴影走 token（含底栏向上阴影专用档）----
-t('U-06a --shadow-up 定义且 batch-actions 使用', style.indexOf('--shadow-up:') >= 0 && style.indexOf('box-shadow: var(--shadow-up)') >= 0);
+// ---- U-06 · 阴影走 token ----
+// 批次 H 契约变更（2026-11-12）：唯一消费方 .batch-actions 属批量选择死代码链，已整链移除，--shadow-up 随删
+t('U-06a --shadow-up 已随批量操作栏死代码移除（批次 H）', style.indexOf('--shadow-up') < 0 && style.indexOf('batch-actions') < 0);
 // 肯定式校验（负向 lookahead 会被 \s* 回溯绕过）：每条 box-shadow 必须以 var( 或 cal-day.today 的 inset 描边开头
 const shadows = style.match(/box-shadow:[^;]+;/g) || [];
 const badShadows = shadows.filter(s => !/^box-shadow:\s*(var\(--|inset 0 0 0 2px var\()/.test(s));

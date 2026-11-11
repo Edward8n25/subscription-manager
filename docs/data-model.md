@@ -121,7 +121,7 @@ function heatLevel(count) {
 
 ### 4. 排序字段
 
-`order` 字段随数据创建/复制时维护，但当前排序 UI（按续费时间 / 价格 / 名称）不消费该字段，拖拽排序 UI 未实现（2026-10-25 盘点如实记录）。
+`order` 字段随数据创建/复制时维护，但当前排序 UI（按续费时间 / 价格 / 名称）不消费该字段，拖拽排序 UI 未实现（2026-10-25 盘点如实记录）。2026-11-12 第 2 轮盘点批次 H：依赖 order 的批量选择死代码链（selectedIds / batchDelete / deleteSubscriptions）与零调用的 `updateOrder()` 已整链移除；`order` 字段本身保留在 schema 与归一化管道中，作未来拖拽排序/归档扩展的预留位。
 
 ---
 

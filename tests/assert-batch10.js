@@ -90,6 +90,15 @@ t('G-b applyTheme 同步 meta theme-color（浅 #ffffff / 深 #121212）',
   /meta\[name="theme-color"\]/.test(app) && /metaTheme\.setAttribute\('content', dark \? '#121212' : '#ffffff'\)/.test(app));
 t('G-c index.html 保留 theme-color meta（JS 未跑前的初始值）', html.indexOf('<meta name="theme-color"') >= 0);
 
+// ---- N-14 · 死代码链删除（批量选择永不可达 / updateOrder 零调用；方案一整链清除）----
+t('H-a app.js 批量链零引用（selectedIds / updateOrder / deleteSubscriptions / batchDelete / clearSelection / batch-actions）',
+  app.indexOf('selectedIds') < 0 && app.indexOf('updateOrder') < 0 && app.indexOf('deleteSubscriptions') < 0
+  && app.indexOf('batchDelete') < 0 && app.indexOf('clearSelection') < 0 && app.indexOf('batch-actions') < 0);
+t('H-b index.html 批量死 CSS 移除（.subscription-card.selected / .batch-actions / --shadow-up）',
+  style.indexOf('.subscription-card.selected') < 0 && style.indexOf('.batch-actions') < 0 && style.indexOf('--shadow-up') < 0);
+t('H-c app.js 头注释不再宣称「批量操作」', app.indexOf('批量操作') < 0);
+t('H-d data-model.md 注记批次 H 清理记录（order 字段保留、updateOrder 已移除）', dataModel.indexOf('批次 H') >= 0 && dataModel.indexOf('updateOrder') >= 0);
+
 let pass = 0;
 results.forEach(([name, ok, detail]) => {
   console.log((ok ? '✅' : '❌') + ' ' + name + (detail ? '   → ' + detail : ''));

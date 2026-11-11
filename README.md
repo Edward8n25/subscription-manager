@@ -207,7 +207,7 @@ subscription-manager/
 ├── tests/
 │   ├── smoke-test.js       ← 冒烟测试（32 项断言，`node tests/smoke-test.js` 运行）
 │   ├── style-consistency.js ← 样式守门棘轮（死 CSS / 失配类名 / Token 阈值，已进 CI）
-│   └── assert-batch2~10.js ← 各批次修复与功能的静态断言（共 120 项）
+│   └── assert-batch2~10.js ← 各批次修复与功能的静态断言（共 124 项）
 │
 ├── CHANGELOG.md
 ├── LICENSE
@@ -224,8 +224,9 @@ subscription-manager/
 - [x] **空态弹窗双触发**：新增订阅只开一层
 - [x] **P3 残留**：价格上限 / 筛选计数 / UTC 日期 / 无效日期兜底
 - [x] **CI 测试门**：断言红灯不部署
+- [x] **死代码清理**：批量选择死链（UI 不可达）与 updateOrder 整链移除
 - [x] **iOS 输入放大 / theme-color**：输入控件 16px、地址栏颜色随主题
-- [x] 测试体系增量：assert-batch10 + contrast-check 守门（N-01~N-17），当前共 **160 项断言**（详见 CHANGELOG）
+- [x] 测试体系增量：assert-batch10 + contrast-check 守门（N-01~N-17），当前共 **164 项断言**（详见 CHANGELOG）
 
 ### 已完成（1.0.0，2026-10-25）
 

@@ -70,6 +70,13 @@
 - **N-17 theme-color 跟随主题**：`applyTheme()` 同步 `<meta name="theme-color">`（浅 #ffffff / 深 #121212）——此前固定深色，浅色主题下移动端地址栏/状态栏颜色不符；主题切换与系统深浅变化（既有监听）都会刷新。manifest 的 `theme_color` 保留深色（PWA 窗口框，未动）。
 - **测试**：assert-batch10 +3（G-a/b/c）；**反向验证记录**：修复前 22/25（G-a/G-b 红），修复后 25/25，12 套件回归零退化。局限（如实记录）：iOS 真机聚焦不放大需实机验证，归发布核验清单。
 
+#### 批次 H · 死代码链清理（N-14，2026-11-12，用户拍板方案一「整链删除」）
+
+- **删除范围（grep 调用图实证后清除）**：批量选择死链——`selectedIds`（从未被写入，UI 永不可达）、批量操作栏渲染块、`clearSelection()` / `batchDelete()` / `deleteSubscriptions()`（仅死路径可达）、卡片 selected 样式逻辑；零调用的 `updateOrder()`；`app.js:6` 头注释「批量操作」宣称；index.html 的 `.subscription-card.selected(+::before)`、`.batch-actions` 死 CSS 与随之无消费方的 `--shadow-up` token。
+- **保留**：`order` 字段仍在 schema、归一化管道与创建/复制赋值中（data-model.md 注记：作未来拖拽排序/归档扩展预留位）；`order` 消费缺位属 2026-10-25 已如实记录的设计现状。
+- **测试**：assert-batch10 +4（H-a/b/c/d）；assert-batch7 契约变更 1 条（U-06a：--shadow-up 从「定义且使用」改为「已随死代码移除」）。
+- **反向验证记录**：修复前 24/29（H 四条红），修复后 29/29；app.js 批量符号 grep 零命中；12 套件回归零退化。
+
 ### 计划中 · UI 按规范 v4 升级（2026-11-11，仅评估，未动代码）
 
 **状态**：已产出「左原版 / 右升级版」对照 demo；本项目代码一行未改。
