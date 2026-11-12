@@ -27,7 +27,7 @@ t('A-02c 关闭时焦点归还触发元素（lastFocused）', /lastFocused/.test
 t('A-04 reduced-motion 媒体查询降级动画', /@media\s*\(prefers-reduced-motion:\s*reduce\)/.test(html) && /animation-duration:\s*0\.01ms/.test(html));
 
 // ---- Doc-04 · 「提醒续费日期」弱宣称如实化 ----
-t('Doc-04 README 不再裸称「提醒续费日期」，改为被动徽章描述', readme.indexOf('提醒续费日期') < 0 && /即将续费.*徽章/.test(readme));
+t('Doc-04 README 不再裸称「提醒续费日期」，改为被动徽章描述', readme.indexOf('提醒续费日期') < 0 && /即将到期.*徽章/.test(readme));
 
 // ---- Doc-06 · 调试入口全量文档化 ----
 t('Doc-06a README 调试入口含 ?view=stats 与 ?theme=', /view=stats/.test(readme) && /theme=light/.test(readme));
@@ -38,9 +38,9 @@ t('REL-a LICENSE 存在且为 MIT', !!license && /MIT License/.test(license) && 
 t('REL-b README 公开测试运行命令（node tests/smoke-test.js）', /node tests\/smoke-test\.js/.test(readme) && /style-consistency\.js/.test(readme));
 t('REL-c README 数据说明含备份双写', /subtrack-v2\.bak/.test(readme) || /双写/.test(readme));
 
-// ---- 版本口径（1.0.0 定版；1.1.0 起新功能递增）----
-t('VER-a 设置弹窗版本文案为 1.1.0 且不再引用已废弃 MavisUI', /SubTrack 1\.1\.0/.test(app) && app.indexOf('MavisUI') < 0);
-t('VER-b manifest.json version 字段 1.1.0', /"version":\s*"1\.1\.0"/.test(manifest));
+// ---- 版本口径（1.2.0 定版，与戒断工具对齐）----
+t('VER-a 设置弹窗版本文案为 1.2.0 且不再引用已废弃 MavisUI', /SubTrack 1\.2\.0/.test(app) && app.indexOf('MavisUI') < 0);
+t('VER-b manifest.json version 字段 1.2.0', /"version":\s*"1\.2\.0"/.test(manifest));
 t('VER-c CHANGELOG 定版 [1.0.0] - 2026-10-25', /\[1\.0\.0\]\s*-\s*2026-10-25/.test(changelog));
 
 // ---- 文档一致性 ----

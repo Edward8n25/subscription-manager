@@ -19,11 +19,10 @@ const fnBody = (name) => {
   return app.slice(i, next < 0 ? app.length : next);
 };
 
-// ---- N-01 · 年热力图未来遮罩（S1：未来续费被强制置空，README「全年续费密度」不成立）----
-const heatBody = fnBody('renderYearHeatmap') || '';
-t('N-01a renderYearHeatmap 不再用 future 遮罩置空（future ? 0 模式移除）', !!heatBody && !/future \? 0/.test(heatBody));
-t('N-01b renderYearHeatmap 内无 future 残留引用（变量连同声明清除）', !!heatBody && !/\bfuture\b/.test(heatBody), '残留: ' + (heatBody.match(/\bfuture\b/g) || []).length + ' 处');
-t('N-01c README 热力图文案如实（不再称「密度一图看完」，改「续费与到期分布」）', readme.indexOf('全年续费密度一图看完') < 0 && readme.indexOf('到期分布') >= 0);
+// ---- N-01 · 年热力图（S1）——1.2.0 契约变更：视图整体移除，改「月历 + 本月扣款摘要」----
+t('N-01a 年热力图已移除（renderYearHeatmap / heat-cell 零引用）', app.indexOf('renderYearHeatmap') < 0 && app.indexOf('heat-cell') < 0);
+t('N-01b 日历改「本月扣款 N 笔」摘要（替代密度图）', app.indexOf('本月扣款') >= 0 && app.indexOf('class="calsum"') >= 0);
+t('N-01c README 不再宣称双视图日历（月历 + 摘要为唯一口径，移除记录保留）', readme.indexOf('双视图日历') < 0 && readme.indexOf('GitHub 贡献图风格') < 0 && readme.indexOf('本月扣款') >= 0);
 
 // ---- N-02 · 空态「+ 新增订阅」双绑定（S2：inline onclick 与 addEventListener 各触发一次 → 弹窗叠两层）----
 t('N-02a 空态按钮无 inline onclick（双绑定断绝；绑定统一走 bindListEvents）', app.indexOf('onclick="window.__st.openNew()"') < 0 && app.indexOf('<button class="btn primary">+ 新增订阅</button>') >= 0);

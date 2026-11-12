@@ -30,8 +30,9 @@ t('U-02b --on-accent 定义且按钮/勾标使用', style.indexOf('--on-accent:'
 // 批次 F 契约变更：lv-3 改实色 accent + --on-accent，--text-on-tint 仅剩 lv-2 一处使用
 t('U-02c --text-on-tint 定义且 lv-2 使用（批次 F 后仅 1 处）', style.indexOf('--text-on-tint:') >= 0 && count(/var\(--text-on-tint\)/g, style) >= 1);
 
-// ---- U-03 · JS 内联仅剩动态 grid ----
-t('U-03 JS 内联仅剩动态 grid-template-columns（1 处）', count(/\sstyle=\\?"/g, app) === 1 && app.indexOf("style=\"grid-template-columns") >= 0);
+// ---- U-03 · JS 内联 style 预算 ----
+// 1.2.0 契约变更：年热力图移除后，JS 内联 style 清零（此前唯一 1 处是动态 grid-template-columns）
+t('U-03 JS 内联 style 清零（年热力图移除，规则体零内联）', count(/\sstyle=\\?"/g, app) === 0, '当前 ' + count(/\sstyle=\\?"/g, app));
 
 // ---- U-05 · 圆角全 token ----
 t('U-05a 裸 px 圆角清零', count(/border-radius:\s*(?!var\(|50%)[0-9.]+px/g, style) === 0);

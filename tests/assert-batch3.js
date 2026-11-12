@@ -1,6 +1,6 @@
 /* 批次 3 · 数据层加固断言（静态分析）
    覆盖：D-01 导入消毒管道 / D-02 备份 key 双写 / D-03 v1→v2 迁移死路
-   行为级断言见 tests/smoke-test.js（vm 沙箱真实加载）。用法：node tests/assert-batch3.js */
+   行为级断言见 tests/smoke-test.js（require + 全局 stub 真实加载）。用法：node tests/assert-batch3.js */
 const fs = require('fs');
 const path = require('path');
 

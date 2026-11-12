@@ -109,7 +109,9 @@ var ACCENT_LIST = ['green', 'blue', 'purple', 'orange'];
 
 原版的"侧滑统计面板"在移动端体验不好（占满屏幕 + 看不到列表），改为独立页面更清晰。
 
-### 3. 日历：4 档色阶
+### 3. 日历：单月历 + 本月扣款摘要
+
+1.2.0：**移除年热力图**（订阅场景一年最多几条，无密度信息量，README 曾宣称「全年续费密度」不成立）；月历保留 4 档色阶（无 / 1 次 / 2 次 / 3+ 次），续费日显示「日期数字 + 角标」而非「N 次」，点开看当天续费明细（移动端无 hover 的补偿）；月历顶部以「本月扣款 N 笔 · 合计 ¥X」摘要替代密度图。统计页不再重复放日历。
 ```js
 function heatLevel(count) {
   if (!count) return 0;     // 0 次
@@ -118,6 +120,21 @@ function heatLevel(count) {
   return 3;                  // 3+ 次
 }
 ```
+
+### 3.1 计费方式（1.2.0 展示层合并，schema 不变）
+
+存储仍为 `paymentType` + `billingCycle` 两字段（**无迁移**）；「按月 / 每年」与「支付形式按月、计费周期每年」是同一信息的两套表述，1.2.0 起 UI 合并为单一下拉「计费方式」，写入映射如下：
+
+| 选择 | paymentType | billingCycle |
+|---|---|---|
+| 每月 | monthly | monthly |
+| 每季 | monthly | quarterly |
+| 每年 | yearly | yearly |
+| 一次性 | oneTime | monthly |
+| 免费 | free | monthly |
+| 自定义 | monthly | custom |
+
+展示口径：`cycleLabel()` 返回 免费 / 一次性 / 每月 / 每季 / 每年 / 自定义（卡片 meta、详情字段列表各显示一次）；价格单位（月/季/年/次/期）与月年折算均跟 `billingCycle` 走，free / oneTime 不折算（D-04 裁决的延伸：数字与单位同一口径）。
 
 ### 4. 排序字段
 

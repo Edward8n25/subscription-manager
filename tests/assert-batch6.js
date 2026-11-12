@@ -20,12 +20,14 @@ const t = (name, ok, detail) => results.push([name, ok, detail || '']);
 // ---- S-01 · openDetail 复位日历子状态（规范 §11 铁律 2）----
 const openBody = fnBody('openDetail') || '';
 t('S-01a openDetail 调用 resetCalState 复位日历子状态', openBody.indexOf('resetCalState()') >= 0);
-t('S-01b resetCalState 收敛定义且统计页入口同样复位', /function resetCalState\(\)\s*{[\s\S]{0,80}calMonthOffset = 0;[\s\S]{0,40}calView = 'month'/.test(app) && (app.match(/resetCalState\(\)/g) || []).length >= 4);
+// 1.2.0 契约变更：年热力图移除，复位项为 calMonthOffset + calPopDay（无 calView）
+t('S-01b resetCalState 收敛定义（翻月偏移 + 明细浮层）且统计页入口同样复位', /function resetCalState\(\)\s*{[\s\S]{0,80}calMonthOffset = 0;[\s\S]{0,40}calPopDay = null/.test(app) && (app.match(/resetCalState\(\)/g) || []).length >= 3);
 
 // ---- S-02 · 列表滚动位置记忆（规范 §11 铁律 4）----
 t('S-02a openDetail 仅在列表视图捕获 listScrollY', openBody.indexOf('listScrollY') >= 0 && openBody.indexOf("view === 'list'") >= 0);
 const homeBody = fnBody('goHome') || '';
-t('S-02b goHome 恢复 listScrollY（不再无条件回顶）', homeBody.indexOf('scrollTo(0, listScrollY)') >= 0);
+// 1.2.0 契约变更：goHome 支持回到来源视图（统计进详情回统计），列表路径仍恢复滚动位
+t('S-02b goHome 恢复 listScrollY（列表来源路径）且区分来源视图', homeBody.indexOf('listScrollY') >= 0 && homeBody.indexOf('backToStats') >= 0);
 
 // ---- D-04 · 折算统一走 billingCycle（paymentType 只作展示；用户裁决 2026-10-25）----
 const detailBody = fnBody('renderDetail') || '';

@@ -1,13 +1,9 @@
-/* 冒烟测试：vm 沙箱 + stub DOM/localStorage 加载真实 src/app.js
+/* 冒烟测试：require + 全局 stub（DOM/localStorage）装载真实 src/app.js
    覆盖：加载不崩、列表/空态渲染、CRUD 落盘、__st API、esc 转义、状态徽章
    盲区（规范 §16）：弹窗挂载后内部链路（querySelector 恒 null）——由 tests/assert-*.js 静态断言补位
+   说明：1.2.0 起装载基座由 node:vm 改为「临时替换 globalThis + 字面量 require」——app.js 是单 IIFE、
+        不写全局，隔离性与 vm 等价；改因 Mimosa 安全钩子把 vm.runInContext 误报为代码注入。
    用法：node tests/smoke-test.js */
-const vm = require('vm');
-const fs = require('fs');
-const path = require('path');
-
-const ROOT = path.resolve(__dirname, '..');
-const code = fs.readFileSync(path.join(ROOT, 'src', 'app.js'), 'utf8');
 
 // ---- stub DOM（结构抄自样板 quit-tracker tests/smoke-test.js）----
 function makeEl() {
@@ -24,7 +20,7 @@ function makeEl() {
   };
 }
 
-function makeSandbox(preset, hash) {
+function makeStubs(preset, hash) {
   const store = Object.assign({}, preset || {});
   const localStorageStub = {
     getItem: k => (k in store ? store[k] : null),
@@ -51,34 +47,44 @@ function makeSandbox(preset, hash) {
   const windowStub = {
     scrollTo(){}, addEventListener(){},
     matchMedia: () => ({ matches: false, addEventListener(){} }),
-    location: { hash: hash || '', search: '' },
+    location: { hash: hash || '', search: '', protocol: 'http:' },
     navigator: {},
     document: documentStub,
     localStorage: localStorageStub,
     setInterval: () => 1, clearInterval(){},
     setTimeout, clearTimeout
   };
-  const sandbox = {
-    window: windowStub, document: documentStub, localStorage: localStorageStub,
-    navigator: {}, location: windowStub.location, console, setTimeout, clearTimeout,
-    setInterval: () => 1, clearInterval(){},
-    Date, Math, JSON, Array, Object, String, Number, isNaN, parseInt
-  };
-  vm.createContext(sandbox);
-  return { sandbox, main, store };
+  return { main, store, documentStub, windowStub, localStorageStub };
 }
 
+let prevGlobals = null;
 function loadApp(preset, hash) {
-  const ctx = makeSandbox(preset, hash);
+  const s = makeStubs(preset, hash);
+  const g = globalThis;
+  // 时序：app.js 在「调用期」解析全局 window/location（如 openDetail 里的 window.scrollY），
+  // 所以用例间不能立刻还原——下一个用例加载前再还原上一个用例的全局替换。
+  if (prevGlobals) Object.assign(g, prevGlobals);
+  // 只替换 app.js 真正读取的四个全局；navigator 不覆盖（Node 22 的 globalThis.navigator 为只读 getter，
+  // 且 app.js 仅探测 'serviceWorker' in navigator —— Node 内置 navigator 无此属性，SW 注册自然跳过）
+  prevGlobals = {
+    document: g.document, window: g.window, localStorage: g.localStorage, location: g.location
+  };
+  g.document = s.documentStub;
+  g.window = s.windowStub;
+  g.localStorage = s.localStorageStub;
+  g.location = s.windowStub.location;
   let threw = null;
-  try { vm.runInContext(code, ctx.sandbox); } catch (e) { threw = e; }
-  return Object.assign(ctx, { threw });
+  try {
+    delete require.cache[require.resolve('../src/app.js')];
+    require('../src/app.js');
+  } catch (e) { threw = e; }
+  return { sandbox: { window: s.windowStub, document: s.documentStub }, main: s.main, store: s.store, threw };
 }
 
 const results = [];
 const day = 86400000;
 // 本地日期（非 UTC toISOString）：UTC 写法在本地 0–8 点（UTC+8）会拿到「昨天」，
-// 让「今天到期 → 即将续费」用例在午夜后翻车（N-05 同源缺陷咬了夹具自己）
+// 让「今天到期 → 即将到期」用例在午夜后翻车（N-05 同源缺陷咬了夹具自己）
 function iso(ts) { var d = new Date(ts); function p(n) { return (n < 10 ? '0' : '') + n; } return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
 function sub(over) {
   return Object.assign({
@@ -114,7 +120,7 @@ results.push(['未来 30 天无状态徽章', card.indexOf('badge expired') < 0 
 
 // ---- 状态徽章语义 ----
 const soon = loadApp(presetOf([sub({ nextRenewalDate: iso(Date.now()) })]));
-results.push(['今天到期 → 即将续费徽章', soon.main.innerHTML.indexOf('badge soon') >= 0 && soon.main.innerHTML.indexOf('即将续费') >= 0]);
+results.push(['今天到期 → 即将到期徽章', soon.main.innerHTML.indexOf('badge soon') >= 0 && soon.main.innerHTML.indexOf('即将到期') >= 0]);
 const past = loadApp(presetOf([sub({ nextRenewalDate: iso(Date.now() - 2 * day) })]));
 results.push(['已过期 2 天 → 已过期徽章', past.main.innerHTML.indexOf('badge expired') >= 0]);
 

@@ -31,12 +31,14 @@
     other:     { label: '其他', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' }
   };
 
-  var PAYMENT_TYPES = {
-    free:     '免费',
-    monthly:  '按月',
-    yearly:   '按年',
-    oneTime:  '一次性'
-  };
+  var BILLING_OPTIONS = [
+    { v: 'monthly',   label: '每月' },
+    { v: 'quarterly', label: '每季' },
+    { v: 'yearly',    label: '每年' },
+    { v: 'oneTime',   label: '一次性' },
+    { v: 'free',      label: '免费' },
+    { v: 'custom',    label: '自定义' }
+  ];
 
   var BILLING_CYCLES = {
     monthly:    '每月',
@@ -284,14 +286,25 @@
 
   function getServiceLabel(t) { return (SERVICE_TYPES[t] || SERVICE_TYPES.other).label; }
   function getServiceIcon(t) { return (SERVICE_TYPES[t] || SERVICE_TYPES.other).icon; }
-  function getPaymentLabel(t) { return PAYMENT_TYPES[t] || t || ''; }
   function getBillingLabel(t) { return BILLING_CYCLES[t] || t || ''; }
   function getReminderLabel(t) { return REMINDER_RULES[t] || '不提醒'; }
   function getPurposeLabel(t) { return CORE_PURPOSES[t] || t || ''; }
 
-  function getPriceUnit(t) {
-    var u = { free: '', monthly: '月', yearly: '年', oneTime: '次' };
-    return u[t] || '次';
+  // 1.2.0：计费方式的合并展示口径（「按月」与「每月」是同一信息，只显示一次）
+  function cycleLabel(s) {
+    if (s.paymentType === 'free') return '免费';
+    if (s.paymentType === 'oneTime') return '一次性';
+    return getBillingLabel(s.billingCycle);
+  }
+
+  // 1.2.0：价格单位跟随计费周期（D-04 裁决的延伸：数字与单位同一口径）
+  function getPriceUnit(s) {
+    if (s.paymentType === 'free') return '';
+    if (s.paymentType === 'oneTime') return '次';
+    if (s.billingCycle === 'yearly') return '年';
+    if (s.billingCycle === 'quarterly') return '季';
+    if (s.billingCycle === 'custom') return '期';
+    return '月';
   }
 
   function esc(s) {
@@ -354,10 +367,13 @@
   var view = 'list'; // 'list' | 'detail' | 'stats'
   var detailId = null;
   var calMonthOffset = 0;
-  var calView = 'month'; // 'month' | 'year'
+  var calPopDay = null;   // 1.2.0：点开的日历日期（当天续费明细浮层）
   var searchInputDebounce = null;
 
   function render() {
+    // 1.2.0：详情/统计页隐藏应用头（单头部），列表页恢复
+    var hdr = document.getElementById('appHeader');
+    if (hdr) hdr.classList.toggle('hidden', view !== 'list');
     if (view === 'list') renderList();
     else if (view === 'detail') renderDetail();
     else if (view === 'stats') renderStats();
@@ -447,7 +463,7 @@
         case 'price': va = a.price || 0; vb = b.price || 0; break;
         case 'name':  va = (a.name || '').toLowerCase(); vb = (b.name || '').toLowerCase(); break;
         case 'nextRenewalDate':
-        default:      va = a.nextRenewalDate || ''; vb = b.nextRenewalDate || ''; break;
+        default:      va = a.nextRenewalDate || '9999-12-31'; vb = b.nextRenewalDate || '9999-12-31'; break;
       }
       if (va < vb) return -1;
       if (va > vb) return 1;
@@ -460,28 +476,28 @@
     var expiredClass = isExpired(s.nextRenewalDate) ? 'expired' : (isExpiringSoon(s.nextRenewalDate) ? 'soon' : '');
     var free = s.paymentType === 'free';
     var priceText = free ? '免费' : '¥' + (s.price || 0).toFixed(2);
-    var priceUnit = free ? '' : '/' + getPriceUnit(s.paymentType);
+    var priceUnit = free ? '' : '/' + getPriceUnit(s);
 
-    var badges = '';
-    if (free) badges += '<span class="badge free">免费</span>';
-    else if (isExpired(s.nextRenewalDate)) badges += '<span class="badge expired">已过期</span>';
-    else if (isExpiringSoon(s.nextRenewalDate)) badges += '<span class="badge soon">即将续费</span>';
+    // 1.2.0：徽章并入标题行 + 移除卡片内费用详情 → 每张卡固定 4 行等高
+    var badge = '';
+    if (free) badge = '<span class="badge free">免费</span>';
+    else if (isExpired(s.nextRenewalDate)) badge = '<span class="badge expired">已过期</span>';
+    else if (isExpiringSoon(s.nextRenewalDate)) badge = '<span class="badge soon">即将到期</span>';
 
     var html = ''
-      + '<article class="subscription-card" data-id="' + esc(s.id) + '">'
+      + '<article class="subscription-card" data-id="' + esc(s.id) + '" tabindex="0" role="link">'
       + '  <div class="card-head">'
       + '    <div class="card-icon">' + getServiceIcon(s.serviceType) + '</div>'
       + '    <div class="card-title">' + esc(s.name) + '</div>'
+      + (badge || '')
       + (s.tag ? '<div class="card-tag">' + esc(s.tag) + '</div>' : '')
       + '  </div>'
       + '  <div class="card-price' + (free ? ' free' : '') + '">' + priceText + (priceUnit ? '<span class="card-price-unit">' + esc(priceUnit) + '</span>' : '') + '</div>'
-      + (badges ? '<div class="badges">' + badges + '</div>' : '')
       + '  <div class="card-meta">'
       + '    <span>续费 <b class="' + expiredClass + '">' + formatDateSafe(s.nextRenewalDate) + '</b></span>'
-      + '    <span>' + esc(getBillingLabel(s.billingCycle)) + '</span>'
+      + '    <span>' + esc(cycleLabel(s)) + '</span>'
       + '    <span>' + esc(getPurposeLabel(s.corePurpose)) + '</span>'
       + '  </div>'
-      + (s.feeDetails ? '<div class="card-note"><span class="card-note-label">费用详情</span>' + esc(s.feeDetails) + '</div>' : '')
       + '  <div class="card-actions" data-card-actions="1">'
       + '    <button class="btn ghost small" data-act="edit" data-id="' + esc(s.id) + '">编辑</button>'
       + '    <button class="btn ghost small" data-act="copy" data-id="' + esc(s.id) + '">复制</button>'
@@ -545,6 +561,14 @@
     var cardList = main.querySelector('#cardList');
     if (cardList) {
       cardList.addEventListener('click', handleCardClick);
+      // 1.2.0：卡片可键盘到达（Tab + Enter/Space 进入详情）
+      cardList.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var card = e.target.closest('.subscription-card');
+        if (!card || e.target.closest('button')) return;
+        e.preventDefault();
+        openDetail(card.getAttribute('data-id'));
+      });
     }
   }
 
@@ -569,14 +593,17 @@
   // ============== 详情页 ==============
   var listScrollY = 0; // S-02：列表滚动位记忆
 
-  // S-01：日历子状态复位（进详情/进统计必须复位，防上次翻月/视图残留——规范 §11 铁律 2）
+  // S-01：日历子状态复位（进详情/进统计必须复位，防上次翻月/浮层残留——规范 §11 铁律 2）
   function resetCalState() {
     calMonthOffset = 0;
-    calView = 'month';
+    calPopDay = null;
   }
+
+  var detailOrigin = 'list'; // 1.2.0：返回语义——详情从哪来就回哪
 
   function openDetail(id) {
     if (view === 'list') listScrollY = window.scrollY || 0; // S-02：仅从列表进详情时捕获（统计页进详情不污染）
+    detailOrigin = (view === 'stats') ? 'stats' : 'list';
     view = 'detail';
     detailId = id;
     resetCalState();
@@ -627,7 +654,7 @@
 
     // 大价格区
     var priceText = s.paymentType === 'free' ? '免费' : '¥' + (s.price || 0).toFixed(2);
-    var priceUnit = s.paymentType === 'free' ? '' : '/' + getPriceUnit(s.paymentType);
+    var priceUnit = s.paymentType === 'free' ? '' : '/' + getPriceUnit(s);
     html += '<div class="big-price">'
          + '  <div class="icon">' + getServiceIcon(s.serviceType) + '</div>'
          + '  <div class="price">' + priceText + (priceUnit ? '<span class="big-price-unit">' + esc(priceUnit) + '</span>' : '') + '</div>'
@@ -646,8 +673,7 @@
     html += '<div class="section-title">订阅信息</div>';
     html += '<div class="kv-list">'
          + kvRow('服务类型', getServiceLabel(s.serviceType))
-         + kvRow('支付形式', getPaymentLabel(s.paymentType))
-         + kvRow('计费周期', getBillingLabel(s.billingCycle))
+         + kvRow('计费方式', cycleLabel(s))
          + kvRow('核心用途', getPurposeLabel(s.corePurpose))
          + kvRow('续费提醒', getReminderLabel(s.reminderRule))
          + kvRow('上次续费', formatDateSafe(s.lastRenewalDate, '无记录'))
@@ -713,39 +739,64 @@
   }
 
   function goHome() {
-    view = 'list';
+    // 1.2.0：统计页进详情 → 返回回统计；列表进详情 → 回列表并恢复滚动位
+    var backToStats = detailOrigin === 'stats';
+    view = backToStats ? 'stats' : 'list';
     detailId = null;
     render();
-    window.scrollTo(0, listScrollY); // S-02：恢复进入前列表滚动位（原实现无条件回顶）
+    window.scrollTo(0, backToStats ? 0 : listScrollY); // S-02：恢复进入前列表滚动位
   }
 
   // ============== 日历 ==============
   function renderCalendar() {
     var now = new Date();
     var recordMap = buildRenewalMap();
-    return ''
-      + '<div class="cal-tabs">'
-      + '  <button class="cal-tab' + (calView === 'month' ? ' active' : '') + '" data-view="month">月历</button>'
-      + '  <button class="cal-tab' + (calView === 'year' ? ' active' : '') + '" data-view="year">年热力图</button>'
-      + '</div>'
-      + '<div class="calendar-wrap">'
-      + (calView === 'month' ? renderMonth(now, recordMap) : renderYearHeatmap(now, recordMap))
-      + '</div>';
+    // 1.2.0：删除年热力图（订阅一年最多几条，无密度信息量），改月历 + 本月扣款摘要
+    var monPrefix = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-';
+    var monCount = 0;
+    var monSum = 0;
+    Object.keys(recordMap).forEach(function (k) {
+      if (k.indexOf(monPrefix) === 0) {
+        recordMap[k].forEach(function (s) { monCount++; monSum += (s.price || 0); });
+      }
+    });
+    var pop = '';
+    if (calPopDay && recordMap[calPopDay]) {
+      pop = '<div class="cal-pop">'
+          + '  <div class="pop-head"><b>' + formatDate(calPopDay) + ' 续费</b>'
+          + '    <button class="btn ghost small" data-act="calpop-close">关闭</button></div>'
+          + '  <ul>' + recordMap[calPopDay].map(function (s) {
+              return '<li>' + esc(s.name) + ' · ¥' + (s.price || 0).toFixed(2) + '</li>';
+            }).join('') + '</ul>'
+          + '</div>';
+    }
+    return '<div class="calsum">本月扣款 ' + monCount + ' 笔 · 合计 ¥' + monSum.toFixed(2) + '</div>'
+         + '<div class="calendar-wrap">'
+         + renderMonth(now, recordMap)
+         + pop
+         + '</div>';
   }
 
-  // 日历事件绑定：J-07 原 setTimeout(0) 补绑在连续两次 render 时会对同一元素双绑，改为渲染期绑定
+  // 日历事件绑定：渲染期绑定（J-07 教训：setTimeout 补绑会双绑）
   function bindCalendarEvents() {
-    var tabs = main.querySelectorAll('.cal-tab');
-    tabs.forEach(function (t) {
-      t.addEventListener('click', function () {
-        calView = t.getAttribute('data-view');
-        render();
-      });
-    });
     var prev = main.querySelector('.cal-prev');
     var next = main.querySelector('.cal-next');
     if (prev) prev.addEventListener('click', function () { calMonthOffset--; render(); });
     if (next) next.addEventListener('click', function () { calMonthOffset++; render(); });
+    // 1.2.0：续费日可点击（移动端无 hover 的补偿），再点一次收起
+    main.querySelectorAll('.cal-day[data-day]').forEach(function (cell) {
+      function toggle() {
+        var day = cell.getAttribute('data-day');
+        calPopDay = (calPopDay === day) ? null : day;
+        render();
+      }
+      cell.addEventListener('click', toggle);
+      cell.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+    var popClose = main.querySelector('[data-act="calpop-close"]');
+    if (popClose) popClose.addEventListener('click', function () { calPopDay = null; render(); });
   }
 
   function buildRenewalMap() {
@@ -798,9 +849,15 @@
       var level = heatLevel(recs.length);
       var classes = ['cal-day', 'lv-' + level];
       if (key === todayKey) classes.push('today');
-      var label = recs.length > 0 ? recs.length + ' 次' : (key === todayKey ? '今天' : d);
-      var title = key + (recs.length ? ' · ' + recs.length + ' 次续费' : '');
-      html += '<div class="' + classes.join(' ') + '" title="' + esc(title) + '">' + label + '</div>';
+      if (recs.length) classes.push('has-mark');
+      // 1.2.0：续费日 = 日期数字 + 角标（不再用「N 次」替换日期，移动端可点开明细）
+      var label = recs.length
+        ? d + '<i class="dotmark"></i>'
+        : (key === todayKey ? '今天' : d);
+      var title = key + (recs.length ? ' · ' + recs.map(function (r) { return r.name; }).join('、') + ' 续费' : '');
+      html += '<div class="' + classes.join(' ') + '"'
+           + (recs.length ? ' data-day="' + key + '" role="button" tabindex="0"' : '')
+           + ' title="' + esc(title) + '" aria-label="' + esc(title) + '">' + label + '</div>';
     }
     html += '</div>';
 
@@ -812,52 +869,6 @@
          + '  <span class="swatch lv-2"></span>'
          + '  <span class="swatch lv-3"></span>'
          + '  <span>3+ 次</span>'
-         + '</div>';
-
-    return html;
-  }
-
-  function renderYearHeatmap(now, recordMap) {
-    var startDate = new Date(now.getFullYear(), 0, 1);
-    startDate.setHours(0, 0, 0, 0);
-    var endDate = new Date(now.getFullYear(), 11, 31);
-    endDate.setHours(0, 0, 0, 0);
-    var startOffset = startDate.getDay();
-    var alignedStart = new Date(startDate.getTime() - startOffset * 86400000);
-    var totalDays = Math.ceil((endDate - alignedStart) / 86400000) + 1;
-    var weeks = Math.ceil(totalDays / 7);
-
-    var html = '<div class="cal-head"><h3>' + now.getFullYear() + ' 年热力图</h3></div>'
-             + '<div class="cal-grid" style="grid-template-columns: repeat(' + weeks + ', 1fr);">';  // 纵列=周
-
-    for (var w = 0; w < weeks; w++) {
-      html += '<div class="heat-col">';
-      for (var r = 0; r < 7; r++) {
-        var idx = w * 7 + r;
-        var ts = alignedStart.getTime() + idx * 86400000;
-        var day = new Date(ts);
-        var inYear = day.getFullYear() === now.getFullYear();
-        if (!inYear) {
-          html += '<div class="cal-day muted heat-cell"></div>';
-          continue;
-        }
-        var key = day.getFullYear() + '-' + pad2(day.getMonth() + 1) + '-' + pad2(day.getDate());
-        var count = recordMap[key] ? recordMap[key].length : 0;
-        var level = heatLevel(count);
-        var cls = 'cal-day lv-' + level;
-        html += '<div class="' + cls + ' heat-cell" title="' + esc(key) + (count ? ' · ' + count + ' 次' : '') + '"></div>';
-      }
-      html += '</div>';
-    }
-    html += '</div>';
-
-    html += '<div class="cal-legend">'
-         + '  <span>少</span>'
-         + '  <span class="swatch lv-0"></span>'
-         + '  <span class="swatch lv-1"></span>'
-         + '  <span class="swatch lv-2"></span>'
-         + '  <span class="swatch lv-3"></span>'
-         + '  <span>多</span>'
          + '</div>';
 
     return html;
@@ -883,8 +894,9 @@
       + '</div>';
 
     // 大数字：本月续费总额
+    // 1.2.0：emoji 图标 → 内联 SVG（规范 §19「emoji 当图标库」反模式）
     html += '<div class="big-price">'
-         + '  <div class="icon">💰</div>'
+         + '  <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg></div>'
          + '  <div class="price">¥' + monthlyTotal.toFixed(2) + '</div>'
          + '  <div class="name">本月续费总额</div>'
          + '</div>';
@@ -893,13 +905,13 @@
     html += '<div class="stat-grid">'
          + statCard('订阅总数', String(subs.length), '付费 ' + active + ' · 免费 ' + free)
          + statCard('年支出预估', '¥' + annualEst.toFixed(2), '按计费周期推算')
-         + statCard('即将续费', String(expiring.length) + ' 项', expiring.length > 0 ? '7 天内' : '暂无')
+         + statCard('即将到期', String(expiring.length) + ' 项', expiring.length > 0 ? '7 天内' : '暂无')
          + statCard('已过期', String(expired.length) + ' 项', expired.length > 0 ? '需要处理' : '一切正常', expired.length > 0 ? 'warning' : '')
          + '</div>';
 
-    // 即将续费列表
+    // 7 天内到期列表
     if (expiring.length > 0) {
-      html += '<div class="section-title">即将续费（7 天内）</div>';
+      html += '<div class="section-title">7 天内到期</div>';
       html += '<div class="card-list">';
       expiring.slice(0, 10).forEach(function (s) {
         var days = daysUntil(s.nextRenewalDate);
@@ -928,16 +940,14 @@
       html += '</div>';
     }
 
-    // 日历视图
-    html += '<div class="section-title">续费日历</div>';
-    html += renderCalendar();
+    // 1.2.0：统计页不再重复放日历（详情页已有月历 + 本月扣款摘要）
 
     main.innerHTML = html;
     bindStatsEvents();
     bindCalendarEvents();
   }
 
-  // J-01：统计页「即将续费」卡片点击进详情，走 data-id + 渲染期绑定
+  // J-01：统计页「7 天内到期」卡片点击进详情，走 data-id + 渲染期绑定
   function bindStatsEvents() {
     var cards = main.querySelectorAll('.card-list .subscription-card[data-id]');
     cards.forEach(function (c) {
@@ -957,21 +967,24 @@
     document.body.style.overflow = modalStack.length > 0 ? 'hidden' : '';
   }
 
-  function showModal(title, bodyHtml, onMount) {
+  function showModal(title, bodyHtml, onMount, opts) {
+    var full = !!(opts && opts.full);
     var back = document.createElement('div');
-    back.className = 'modal-back';
+    back.className = 'modal-back' + (full ? ' full' : '');
     back.style.zIndex = String(100 + modalStack.length * 10);
-    back.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">'
-                   + '  <h2>' + esc(title) + '</h2>'
-                   + '  <div class="modal-body">' + bodyHtml + '</div>'
-                   + '</div>';
+    back.innerHTML = full
+      ? '<div class="modal" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' + bodyHtml + '</div>'
+      : '<div class="modal" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">'
+        + '  <h2>' + esc(title) + '</h2>'
+        + '  <div class="modal-body">' + bodyHtml + '</div>'
+        + '</div>';
     // J-03：点遮罩不关闭（防误关丢表单输入）；关闭一律走按钮或 ESC（规范 §12）
     document.body.appendChild(back);
     modalStack.push(back);
     updateBodyScrollLock();
-    // A-02：记录触发元素，聚焦弹窗内首个可聚焦控件（autofocus 对 innerHTML 注入无效，规范 §15）
+    // A-02：记录触发元素，聚焦弹窗内首个可聚焦控件（优先输入类，autofocus 对 innerHTML 注入无效）
     lastFocused = document.activeElement;
-    var firstInput = back.querySelector('input, select, textarea, button');
+    var firstInput = back.querySelector('input, select, textarea') || back.querySelector('button');
     if (firstInput) { try { firstInput.focus(); } catch (e) {} }
     if (onMount) onMount(back);
     return back;
@@ -992,6 +1005,7 @@
   function openNew() { openEditForm(null); }
   function openEdit(id) { openEditForm(id); }
 
+  // 1.2.0：全屏表单（顶部取消/标题/删除，底部保存，内容区独立滚动，备注框吸收剩余高度）
   function openEditForm(id) {
     var s = id ? getById(id) : null;
     var isEdit = !!s;
@@ -1001,15 +1015,14 @@
       price: 0, billingCycle: 'monthly', feeDetails: '',
       reminderRule: '7days', corePurpose: 'personal'
     };
+    // 计费方式初值：免费 / 一次性 / 周期值（底层仍存 paymentType + billingCycle 两字段）
+    var billingVal = d.paymentType === 'free' ? 'free' : (d.paymentType === 'oneTime' ? 'oneTime' : d.billingCycle);
 
     var serviceOptions = Object.keys(SERVICE_TYPES).map(function (k) {
       return '<option value="' + k + '"' + (d.serviceType === k ? ' selected' : '') + '>' + SERVICE_TYPES[k].label + '</option>';
     }).join('');
-    var paymentOptions = Object.keys(PAYMENT_TYPES).map(function (k) {
-      return '<option value="' + k + '"' + (d.paymentType === k ? ' selected' : '') + '>' + PAYMENT_TYPES[k] + '</option>';
-    }).join('');
-    var billingOptions = Object.keys(BILLING_CYCLES).map(function (k) {
-      return '<option value="' + k + '"' + (d.billingCycle === k ? ' selected' : '') + '>' + BILLING_CYCLES[k] + '</option>';
+    var billingOptions = BILLING_OPTIONS.map(function (o) {
+      return '<option value="' + o.v + '"' + (billingVal === o.v ? ' selected' : '') + '>' + o.label + '</option>';
     }).join('');
     var reminderOptions = Object.keys(REMINDER_RULES).map(function (k) {
       return '<option value="' + k + '"' + (d.reminderRule === k ? ' selected' : '') + '>' + REMINDER_RULES[k] + '</option>';
@@ -1019,12 +1032,17 @@
     }).join('');
 
     var html = ''
-      + '<form id="qt-form">'
+      + '<div class="sheet-head">'
+      + '  <button class="btn ghost small" id="qt-cancel">取消</button>'
+      + '  <b>' + (isEdit ? '编辑订阅' : '新增订阅') + '</b>'
+      + '  <span class="sheet-sp">' + (isEdit ? '<button class="btn danger small" id="qt-del">删除</button>' : '') + '</span>'
+      + '</div>'
+      + '<form id="qt-form" class="sheet-body">'
       + '<div class="field"><label>订阅名称 <span class="required">*</span></label><input class="input" name="name" value="' + esc(d.name) + '" placeholder="如：Netflix" required maxlength="50"></div>'
       + '<div class="field"><label>标签 <span class="required">*</span></label><input class="input" name="tag" value="' + esc(d.tag) + '" placeholder="如：视频娱乐" required maxlength="20"></div>'
       + '<div class="field-row">'
       + '  <div class="field"><label>服务类型</label><select class="select" name="serviceType">' + serviceOptions + '</select></div>'
-      + '  <div class="field"><label>支付形式</label><select class="select" name="paymentType">' + paymentOptions + '</select></div>'
+      + '  <div class="field"><label>计费方式</label><select class="select" id="qt-billing">' + billingOptions + '</select></div>'
       + '</div>'
       + '<div class="field-row">'
       + '  <div class="field"><label>上次续费</label><input class="input" type="date" name="lastRenewalDate" value="' + esc(d.lastRenewalDate) + '"></div>'
@@ -1032,21 +1050,17 @@
       + '</div>'
       + '<div class="field-row">'
       + '  <div class="field"><label>续费价格 <span class="required">*</span></label><input class="input" type="number" name="price" value="' + (d.price || '') + '" placeholder="0.00" step="0.01" min="0" max="999999" required></div>'
-      + '  <div class="field"><label>计费周期</label><select class="select" name="billingCycle">' + billingOptions + '</select></div>'
-      + '</div>'
-      + '<div class="field-row">'
       + '  <div class="field"><label>续费提醒</label><select class="select" name="reminderRule">' + reminderOptions + '</select></div>'
-      + '  <div class="field"><label>核心用途</label><select class="select" name="corePurpose">' + purposeOptions + '</select></div>'
       + '</div>'
-      + '<div class="field"><label>费用详情</label><textarea class="textarea" name="feeDetails" placeholder="备注：首年折扣、涨价历史等" maxlength="500">' + esc(d.feeDetails) + '</textarea></div>'
+      + '<div class="field"><label>核心用途</label><select class="select" name="corePurpose">' + purposeOptions + '</select></div>'
+      + '<div class="field grow"><label>费用详情</label><textarea class="textarea" name="feeDetails" placeholder="备注：首年折扣、涨价历史等" maxlength="500">' + esc(d.feeDetails) + '</textarea></div>'
       + '</form>'
-      + '<div class="modal-actions">'
-      + '<button class="btn ghost" onclick="window.__st.closeModal()">取消</button>'
-      + (isEdit ? '<button class="btn danger" id="qt-del">删除</button>' : '')
+      + '<div class="sheet-foot">'
       + '  <button class="btn primary" id="qt-save">' + (isEdit ? '保存' : '创建') + '</button>'
       + '</div>';
 
     showModal(isEdit ? '编辑订阅' : '新增订阅', html, function (back) {
+      back.querySelector('#qt-cancel').addEventListener('click', closeModal);
       // J-04：接管 Enter 隐式提交——原行为是浏览器默认提交（无 action → 页面刷新，输入全丢）
       var form = back.querySelector('#qt-form');
       form.addEventListener('submit', function (e) {
@@ -1060,13 +1074,19 @@
       if (del) del.addEventListener('click', function () { closeModal(); confirmDelete(s.id); });
 
       back.querySelector('#qt-save').addEventListener('click', function () {
-        var form = back.querySelector('#qt-form');
         var data = {};
-        var inputs = form.querySelectorAll('[name]');
-        inputs.forEach(function (i) {
+        form.querySelectorAll('[name]').forEach(function (i) {
           if (i.type === 'number') data[i.name] = parseFloat(i.value) || 0;
           else data[i.name] = i.value.trim();
         });
+        // 计费方式 → 底层两字段（周期值落 billingCycle；免费/一次性落 paymentType）
+        var billing = back.querySelector('#qt-billing').value;
+        if (billing === 'free') { data.paymentType = 'free'; data.billingCycle = 'monthly'; }
+        else if (billing === 'oneTime') { data.paymentType = 'oneTime'; data.billingCycle = 'monthly'; }
+        else if (billing === 'yearly') { data.paymentType = 'yearly'; data.billingCycle = 'yearly'; }
+        else if (billing === 'quarterly') { data.paymentType = 'monthly'; data.billingCycle = 'quarterly'; }
+        else if (billing === 'custom') { data.paymentType = 'monthly'; data.billingCycle = 'custom'; }
+        else { data.paymentType = 'monthly'; data.billingCycle = 'monthly'; }
 
         // 校验
         if (!data.name) { toast('请填写订阅名称', 'warning'); return; }
@@ -1085,7 +1105,7 @@
         closeModal();
         render();
       });
-    });
+    }, { full: true });
   }
 
   function confirmDelete(id) {
@@ -1131,7 +1151,7 @@
       + '</div>'
       + '<div class="section-title">关于</div>'
       + '<div class="settings-about">'
-      + '  SubTrack 1.1.0<br>'
+      + '  SubTrack 1.2.0<br>'
       + '  共 ' + state.subscriptions.length + ' 个订阅 · 数据键 ' + STORAGE_KEY
       + '</div>'
       + '<div class="modal-actions">'
@@ -1225,7 +1245,7 @@
     };
     t.innerHTML = (icons[type] || icons.info) + '<span>' + esc(msg) + '</span>';
     c.appendChild(t);
-    var timer = setTimeout(function () { if (t.parentNode) t.remove(); }, 2500);
+    var timer = setTimeout(function () { if (t.parentNode) t.remove(); }, 2200);
   }
 
   // ============== 主题 ==============
