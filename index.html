@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#121212" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="SubTrack" />
+  <meta name="apple-mobile-web-app-title" content="订阅管理" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
-  <title>SubTrack · 订阅管理</title>
+  <title>订阅管理 · 本地订阅账本</title>
   <style>
     /* ============== 主题变量（Spotify 风格 + 深浅双主题）============== */
     :root {
@@ -119,7 +119,6 @@
     .divider { height: 1px; background: var(--border); margin: 24px 0; }
     .hidden { display: none !important; }
     .btn-stack { display: grid; gap: 8px; }
-    .flush { margin-top: 0; }
 
     /* ============== 顶部 Header ============== */
     .header {
@@ -140,8 +139,22 @@
       cursor: pointer; transition: background .12s var(--ease);
       position: relative;
     }
-    /* 触控目标 44px（规范 §8.8/§8.9②）：视觉 36，伪元素扩命中区 */
-    .icon-btn::before { content: ""; position: absolute; inset: -4px; }
+    /* 触控目标 44px（规范 §8.8/§8.9②）：视觉 36，::after 扩命中区（::before 留给提示气泡） */
+    .icon-btn::after { content: ""; position: absolute; inset: -4px; }
+    .back-btn::after { content: ""; position: absolute; inset: -4px; }
+    /* 图标按钮提示（F14，对齐戒断）：hover / 键盘聚焦显示，深底浅字、不挡点击 */
+    .icon-btn[data-tip]::before {
+      content: attr(data-tip);
+      position: absolute; top: calc(100% + 6px); left: 50%;
+      background: var(--text); color: var(--bg);
+      font-size: 12px; font-weight: 600; line-height: 20px;
+      padding: 4px 8px; border-radius: var(--radius-sm);
+      white-space: nowrap; pointer-events: none;
+      opacity: 0; transform: translateX(-50%) translateY(-2px);
+      transition: opacity .12s var(--ease), transform .12s var(--ease);
+      z-index: 60;
+    }
+    .icon-btn[data-tip]:hover::before, .icon-btn[data-tip]:focus-visible::before { opacity: 1; transform: translateX(-50%) translateY(0); }
     .icon-btn:hover { background: var(--tap); }
     .icon-btn svg { width: 20px; height: 20px; }
     .header .right { margin-left: auto; display: flex; gap: 4px; }
@@ -234,21 +247,20 @@
     .tag-filter.active { background: var(--text); color: var(--bg); }
 
     /* ============== 排序选择 ============== */
-    .sort-bar {
-      display: flex; gap: 8px; align-items: center; margin-bottom: 12px;
-      font-size: 12px; color: var(--text-sub);
+    /* 排序行（1.2.0）：胶囊按钮 + 右对齐计数，与标签胶囊同一皮肤 */
+    .sort-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--bg-elev); color: var(--text-sub);
+      border: 1px solid transparent; border-radius: var(--radius-pill);
+      padding: 8px 12px; font-size: 12px; font-weight: 600; font-family: inherit;
+      line-height: 16px; cursor: pointer;
+      transition: color .12s var(--ease), background .12s var(--ease);
     }
-    .sort-bar select {
-      background: var(--bg-elev);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-pill);
-      padding: 8px 12px;
-      font-size: 16px;              /* N-04：<16px 会触发 iOS Safari 聚焦自动放大 */
-      cursor: pointer;
-      outline: none;
-    }
-    .sort-bar select:focus { border-color: var(--text); }
+    .sort-btn:hover { color: var(--text); }
+    .sort-btn svg { width: 14px; height: 14px; }
+    .sort-bar .count { margin-left: auto; font-size: 12px; color: var(--text-mute); font-weight: 500; line-height: 20px; }
+    .sort-list { display: grid; gap: 8px; }
 
     /* ============== 订阅卡片 ============== */
     .card-list { display: flex; flex-direction: column; gap: 12px; }
@@ -492,8 +504,21 @@
     .required { color: var(--danger); }
 
     /* 设置弹窗（原 JS 内联样式收敛） */
-    .settings-hint { font-size: 12px; color: var(--text-mute); margin-top: 16px; line-height: 20px; }
-    .settings-about { font-size: 12px; color: var(--text-sub); line-height: 20px; }
+    /* 设置弹窗（1.2.0 对齐戒断工具）：分组标题 / 选中态按钮 / 关于块
+       1.2.0 微调：设置内控件与关于块收敛到 12px（此前 16px 在 480 弹窗里过重） */
+    .field-label { display: block; font-size: 12px; color: var(--text-sub); font-weight: 600; margin-bottom: 8px; line-height: 20px; }
+    .btn.active { background: var(--text); color: var(--bg); }
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row .btn { flex: 1; justify-content: center; font-size: 12px; line-height: 16px; min-height: 32px; padding: 8px 12px; }
+    .btn-stack .btn { font-size: 12px; line-height: 16px; }
+    .accent-row .btn { font-size: 12px; line-height: 16px; min-height: 32px; padding: 8px 12px; }
+    .settings-about { text-align: center; padding: 4px 0 8px; }
+    .settings-about-name { font-size: 12px; font-weight: 700; color: var(--text-sub); line-height: 20px; }
+    .settings-about-ver { font-size: 12px; color: var(--text-mute); margin-top: 2px; font-variant-numeric: tabular-nums; line-height: 20px; }
+    .settings-about-note { margin: 8px auto 0; max-width: 34em; font-size: 12px; color: var(--text-mute); line-height: 20px; }
+    .field-hint { margin: 8px 0 0; font-size: 12px; color: var(--text-mute); line-height: 20px; }
+    /* 统计页标题行不吸顶（上方已有吸顶应用头，双层吸顶会互相压盖） */
+    .detail-head.plain { position: static; z-index: auto; padding-top: 12px; }
 
     /* ============== Toast ============== */
     .toast-container {
@@ -678,16 +703,16 @@
   <div class="app">
     <header class="header" id="appHeader">
       <div>
-        <h1 id="app-title">SubTrack</h1>
+        <h1 id="app-title">订阅管理</h1>
       </div>
       <div class="right">
-        <button class="icon-btn" id="theme-btn" aria-label="切换主题">
+        <button class="icon-btn" id="theme-btn" aria-label="切换主题" data-tip="切换主题">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
-        <button class="icon-btn" id="stats-btn" aria-label="统计">
+        <button class="icon-btn" id="stats-btn" aria-label="统计" data-tip="统计">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
         </button>
-        <button class="icon-btn" id="settings-btn" aria-label="设置">
+        <button class="icon-btn" id="settings-btn" aria-label="设置" data-tip="设置">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>

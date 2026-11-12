@@ -1,4 +1,4 @@
-# SubTrack · 订阅管理
+# 订阅管理
 
 > **把每一笔订阅变成看得见的账单，让续费日不再突然袭击。**
 
@@ -208,7 +208,7 @@ subscription-manager/
 ├── tests/
 │   ├── smoke-test.js       ← 冒烟测试（32 项断言，`node tests/smoke-test.js` 运行）
 │   ├── style-consistency.js ← 样式守门棘轮（死 CSS / 失配类名 / Token 阈值，已进 CI）
-│   └── assert-batch2~11.js ← 各批次修复与功能的静态断言（共 150 项）
+│   └── assert-batch2~11.js ← 各批次修复与功能的静态断言（共 155 项）
 │
 ├── CHANGELOG.md
 ├── LICENSE
@@ -226,7 +226,7 @@ subscription-manager/
 - [x] **日历**：移除年热力图（无密度信息量），月历改「日期数字 + 角标」并支持点开当天明细，附「本月扣款 N 笔」摘要
 - [x] **交互**：统计→详情返回回到统计、排序空日期沉底、卡片 Tab+Enter 可进入、文案「即将到期」、统计页 SVG 图标、危险按钮降噪
 - [x] **第 2 轮盘点修复（批次 A~H）**：对比度校准（4 配色 × 2 主题 128 项对）、空态双触发、P3 残留、CI 测试门、死代码清理、iOS 16px、theme-color
-- [x] 测试体系：assert-batch10/11 + contrast-check 守门，当前共 **190 项断言**（详见 CHANGELOG）
+- [x] 测试体系：assert-batch10/11 + contrast-check 守门，当前共 **195 项断言**（详见 CHANGELOG）
 
 ### 已完成（1.0.0，2026-10-25）
 

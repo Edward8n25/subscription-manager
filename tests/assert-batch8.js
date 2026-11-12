@@ -38,8 +38,8 @@ t('REL-a LICENSE 存在且为 MIT', !!license && /MIT License/.test(license) && 
 t('REL-b README 公开测试运行命令（node tests/smoke-test.js）', /node tests\/smoke-test\.js/.test(readme) && /style-consistency\.js/.test(readme));
 t('REL-c README 数据说明含备份双写', /subtrack-v2\.bak/.test(readme) || /双写/.test(readme));
 
-// ---- 版本口径（1.2.0 定版，与戒断工具对齐）----
-t('VER-a 设置弹窗版本文案为 1.2.0 且不再引用已废弃 MavisUI', /SubTrack 1\.2\.0/.test(app) && app.indexOf('MavisUI') < 0);
+// ---- 版本口径（1.2.0，与戒断工具对齐；1.2.0 起品牌名统一为「订阅管理」）----
+t('VER-a 设置弹窗显示「订阅管理」+ APP_VERSION 1.2.0（MavisUI 清零）', /var APP_VERSION = '1\.2\.0'/.test(app) && app.indexOf('订阅管理') >= 0 && app.indexOf('MavisUI') < 0);
 t('VER-b manifest.json version 字段 1.2.0', /"version":\s*"1\.2\.0"/.test(manifest));
 t('VER-c CHANGELOG 定版 [1.0.0] - 2026-10-25', /\[1\.0\.0\]\s*-\s*2026-10-25/.test(changelog));
 

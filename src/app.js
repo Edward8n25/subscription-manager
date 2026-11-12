@@ -1,5 +1,5 @@
 /* =========================================================================
-   SubTrack · 订阅管理（按 quit-tracker 设计规范重写）
+   订阅管理（1.2.0 起品牌名统一为「订阅管理」/「订阅」；存储 key 与内部桥名不变）
    - 单文件 IIFE，零依赖
    - 主题：浅/深 + Spotify 绿主色
    - 数据：localStorage
@@ -18,6 +18,7 @@
   var ACCENT_LIST = ['green', 'blue', 'purple', 'orange'];
   var PREFS_KEY = 'subtrack-prefs';
   var SCHEMA_VERSION = 2;
+  var APP_VERSION = '1.2.0'; // 版本口径：与戒断工具对齐（1.0.0 / 1.1.0 / 1.2.0）
 
   var SERVICE_TYPES = {
     streaming: { label: '流媒体', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>' },
@@ -371,9 +372,10 @@
   var searchInputDebounce = null;
 
   function render() {
-    // 1.2.0：详情/统计页隐藏应用头（单头部），列表页恢复
+    // 1.2.0：单头部只用于详情页（编辑/删除在详情头里，空间紧）；
+    // 统计页保留应用头——右上角「主题/统计/设置」随时可用
     var hdr = document.getElementById('appHeader');
-    if (hdr) hdr.classList.toggle('hidden', view !== 'list');
+    if (hdr) hdr.classList.toggle('hidden', view === 'detail');
     if (view === 'list') renderList();
     else if (view === 'detail') renderDetail();
     else if (view === 'stats') renderStats();
@@ -410,16 +412,16 @@
     var filtered = filterAndSort(subs, prefs);
     var filterActive = (prefs.tag && prefs.tag !== 'all') || (prefs.search || '').trim() !== '';
 
-    // 排序
+    // 排序（1.2.0：原生 select → 胶囊按钮 + 排序弹窗，与标签胶囊同皮肤；计数右对齐弱化）
+    var sortLabels = { nextRenewalDate: '按续费时间', price: '按价格', name: '按名称' };
     html += '<div class="sort-bar">'
-         + '  <span>' + (filterActive
-             ? '筛出 ' + filtered.length + ' / 共 ' + subs.length + ' 项 ·'
-             : '共 ' + subs.length + ' 项 ·') + '</span>'
-         + '  <select id="sortSelect">'
-         + '    <option value="nextRenewalDate"' + (prefs.sortBy === 'nextRenewalDate' ? ' selected' : '') + '>按续费时间</option>'
-         + '    <option value="price"' + (prefs.sortBy === 'price' ? ' selected' : '') + '>按价格</option>'
-         + '    <option value="name"' + (prefs.sortBy === 'name' ? ' selected' : '') + '>按名称</option>'
-         + '  </select>'
+         + '  <button class="sort-btn" id="sortBtn" aria-haspopup="dialog">'
+         +      esc(sortLabels[prefs.sortBy] || sortLabels.nextRenewalDate)
+         + '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
+         + '  </button>'
+         + '  <span class="count">' + (filterActive
+             ? '筛出 ' + filtered.length + ' / 共 ' + subs.length + ' 项'
+             : '共 ' + subs.length + ' 项') + '</span>'
          + '</div>';
 
     if (filtered.length === 0) {
@@ -443,6 +445,24 @@
 
     main.innerHTML = html;
     bindListEvents();
+  }
+
+  // 1.2.0：排序选择弹窗（替代原生 select——样式统一为胶囊，且 12px 控件不再触发 iOS 聚焦放大）
+  function openSortPicker() {
+    var opts = [['nextRenewalDate', '按续费时间'], ['price', '按价格'], ['name', '按名称']];
+    var html = '<div class="sort-list">' + opts.map(function (o) {
+      return '<button class="btn block' + (prefs.sortBy === o[0] ? ' active' : '') + '" data-sort="' + o[0] + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
+    showModal('排序方式', html, function (back) {
+      back.querySelectorAll('[data-sort]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          prefs.sortBy = b.getAttribute('data-sort');
+          savePrefs();
+          closeModal();
+          render();
+        });
+      });
+    });
   }
 
   function filterAndSort(subs, p) {
@@ -547,15 +567,9 @@
       });
     }
 
-    // 排序
-    var sortSel = main.querySelector('#sortSelect');
-    if (sortSel) {
-      sortSel.addEventListener('change', function (e) {
-        prefs.sortBy = e.target.value;
-        savePrefs();
-        render();
-      });
-    }
+    // 排序（胶囊按钮 → 排序弹窗）
+    var sortBtn = main.querySelector('#sortBtn');
+    if (sortBtn) sortBtn.addEventListener('click', openSortPicker);
 
     // 卡片操作（事件委托）
     var cardList = main.querySelector('#cardList');
@@ -886,7 +900,7 @@
     var free = subs.filter(function (s) { return s.paymentType === 'free'; }).length;
 
     var html = ''
-      + '<div class="detail-head">'
+      + '<div class="detail-head plain">'
       + '  <button class="back-btn" onclick="window.__st.goHome()" aria-label="返回">'
       + '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>'
       + '  </button>'
@@ -1129,36 +1143,58 @@
   }
 
   // ============== 设置 ==============
+  // 1.2.0：设置面板对齐戒断工具——分组标题 / 主题三选 / 配色四选（选中态）/ 数据管理 / 关于块
   function openSettings() {
+    var names = { green: '经典绿', blue: '深海蓝', purple: '蔷薇紫', orange: '落日橙' };
+    var themeBtns = [['light', '浅色'], ['dark', '深色'], ['auto', '跟随系统']].map(function (t) {
+      return '<button class="btn" data-theme-set="' + t[0] + '">' + t[1] + '</button>';
+    }).join('');
     var html = ''
-      + '<div class="section-title flush">配色</div>'
-      + '<div class="accent-row">'
+      + '<div class="field"><div class="field-label">主题</div><div class="btn-row">' + themeBtns + '</div></div>'
+      + '<div class="field"><div class="field-label">配色</div><div class="accent-row">'
       + ACCENT_LIST.map(function (c) {
-          var names = { green: '经典绿', blue: '深海蓝', purple: '蔷薇紫', orange: '落日橙' };
           return '<button class="btn" data-act="accent" data-accent-name="' + c + '">'
                + '<span class="accent-dot dot-' + c + '"></span>' + names[c] + '</button>';
         }).join('')
-      + '</div>'
-      + '<div class="section-title">数据管理</div>'
-      + '<div class="btn-stack">'
+      + '</div></div>'
+      + '<div class="divider"></div>'
+      + '<div class="field"><div class="field-label">数据管理</div><div class="btn-stack">'
       + '  <button class="btn block" id="qt-export">导出 JSON 备份</button>'
       + '  <button class="btn block" id="qt-import">导入备份</button>'
       + '  <input type="file" id="qt-import-file" accept="application/json,.json" class="hidden">'
-      + '</div>'
-      + '<div class="settings-hint">'
-      + '  你的所有数据都只存在本设备浏览器中。'
-      + '  清除浏览器数据将永久丢失，请定期导出备份。'
-      + '</div>'
-      + '<div class="section-title">关于</div>'
+      + '  <p class="field-hint">共 ' + state.subscriptions.length + ' 个订阅</p>'
+      + '</div></div>'
+      + '<div class="divider"></div>'
       + '<div class="settings-about">'
-      + '  SubTrack 1.2.0<br>'
-      + '  共 ' + state.subscriptions.length + ' 个订阅 · 数据键 ' + STORAGE_KEY
+      + '  <div class="settings-about-name">订阅管理</div>'
+      + '  <div class="settings-about-ver">v' + APP_VERSION + '</div>'
+      + '  <p class="settings-about-note">数据仅存本机 · 清除浏览器数据将永久丢失，请定期导出备份</p>'
       + '</div>'
       + '<div class="modal-actions">'
       + '  <button class="btn ghost block" onclick="window.__st.closeModal()">关闭</button>'
       + '</div>';
 
     showModal('设置', html, function (back) {
+      function readKey(k, dft) { try { return localStorage.getItem(k) || dft; } catch (e) { return dft; } }
+      // 选中态：主题 / 配色各一组（切换后立即高亮）
+      function refreshChoices() {
+        var saved = readKey(THEME_KEY, 'auto');
+        var accent = readKey(ACCENT_KEY, 'green');
+        if (ACCENT_LIST.indexOf(accent) < 0) accent = 'green';
+        back.querySelectorAll('[data-theme-set]').forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-theme-set') === saved);
+        });
+        back.querySelectorAll('[data-act="accent"]').forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-accent-name') === accent);
+        });
+      }
+      back.querySelectorAll('[data-theme-set]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          try { localStorage.setItem(THEME_KEY, b.getAttribute('data-theme-set')); } catch (e) {}
+          applyTheme();
+          refreshChoices();
+        });
+      });
       // 配色切换：持久化 + 即时生效（CSS 变量随 data-accent 即刷），弹窗开着无需重渲染
       function setAccent(c) {
         try { localStorage.setItem(ACCENT_KEY, c); } catch (e) {}
@@ -1168,8 +1204,10 @@
       back.querySelectorAll('[data-act="accent"]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           setAccent(btn.getAttribute('data-accent-name'));
+          refreshChoices();
         });
       });
+      refreshChoices();
 
       back.querySelector('#qt-export').addEventListener('click', function () {
         var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });

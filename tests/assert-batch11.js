@@ -35,8 +35,8 @@ t('② 中文界面无 text-transform（uppercase 清零）', style.indexOf('tex
 
 // ---- 可访问性（§8.8 / §8.9）----
 t('④ 全局 :focus-visible 焦点环（2px accent + 2px 偏移）', /:focus-visible\s*{[^}]*outline:\s*2px solid var\(--accent\)[^}]*outline-offset:\s*2px/.test(style));
-t('⑤ 触控 44px 命中区（icon-btn -4 / btn -4 / btn.small -6）',
-  /\.icon-btn::before\s*{[^}]*inset:\s*-4px/.test(style) && /\.btn::before\s*{[^}]*inset:\s*-4px/.test(style) && /\.btn\.small::before\s*{[^}]*inset:\s*-6px/.test(style));
+t('⑤ 触控 44px 命中区（icon-btn::after / btn::before / btn.small::before）',
+  /\.icon-btn::after\s*{[^}]*inset:\s*-4px/.test(style) && /\.btn::before\s*{[^}]*inset:\s*-4px/.test(style) && /\.btn\.small::before\s*{[^}]*inset:\s*-6px/.test(style));
 t('⑦ 原生表面随主题上色（::selection / caret-color / scrollbar-color）',
   style.indexOf('::selection') >= 0 && style.indexOf('caret-color: var(--accent)') >= 0 && style.indexOf('scrollbar-color') >= 0);
 
@@ -47,7 +47,7 @@ t('⑧ toast 2.2s + 底部安全区（2500 清零）', app.indexOf('2200') >= 0 
 
 // ---- 布局与 chrome（§10 / §11）----
 t('⑨ 底部留白 32px（批量操作栏残渣 100px 清零）', /\.app\s*{[^}]*padding:\s*0 16px 32px/.test(style));
-t('⑨b 详情/统计页隐藏应用头（单头部）', /classList\.toggle\('hidden', view !== 'list'\)/.test(app));
+t('⑨b 详情页隐藏应用头（统计页保留右上角图标，标题行不吸顶）', /classList\.toggle\('hidden', view === 'detail'\)/.test(app) && /detail-head plain/.test(app));
 t('⑱ 标题栏单行（副标题移除）+ 18px 标题', html.indexOf('id="app-sub"') < 0 && style.indexOf('.header .sub') < 0 && /\.header h1\s*{[^}]*font-size:\s*18px/.test(style));
 
 // ---- 卡片（§12.1 信息密度 + 等高）----
@@ -86,8 +86,31 @@ t('⑮ 全屏表单（showModal full + sheet 三段布局）',
 t('⑭ 危险块按钮降噪（描边 + 红字，hover 浅红底）',
   /\.btn\.danger\.block\s*{[^}]*border-color:\s*var\(--border\)[^}]*color:\s*var\(--danger-text\)/.test(style));
 
-// ---- 版本口径 ----
-t('版本 1.2.0（app + manifest，与戒断工具对齐）', /SubTrack 1\.2\.0/.test(app) && /"version":\s*"1\.2\.0"/.test(manifest));
+// ---- 版本与品牌（1.2.0 品牌统一）----
+t('版本 1.2.0（APP_VERSION + manifest，与戒断工具对齐）', /var APP_VERSION = '1\.2\.0'/.test(app) && /"version":\s*"1\.2\.0"/.test(manifest));
+t('品牌统一：标签页「订阅管理 · 本地订阅账本」，页头「订阅管理」，UI 无「SubTrack」', html.indexOf('<title>订阅管理 · 本地订阅账本</title>') >= 0 && html.indexOf('id="app-title">订阅管理') >= 0
+  && [html, app, manifest, readme].every(s => s.indexOf('SubTrack') < 0));
+
+// ---- 图标提示（对齐戒断 F14：::before 气泡 / ::after 命中区）----
+t('三个图标按钮带 data-tip 且 hover/focus-visible 显示', /data-tip="切换主题"/.test(html) && /data-tip="统计"/.test(html) && /data-tip="设置"/.test(html)
+  && /\.icon-btn\[data-tip\]::before\s*{[^}]*content:\s*attr\(data-tip\)/.test(style)
+  && /\.icon-btn\[data-tip\]:hover::before/.test(style) && /\.icon-btn\[data-tip\]:focus-visible::before/.test(style));
+
+// ---- 设置面板（对齐戒断：分组标题 / 主题三选 / 选中态 / 关于块）----
+t('设置面板：主题三选 + 配色四选 + 选中态 + 关于块（订阅数在数据管理、不显示数据键）', app.indexOf('data-theme-set=') >= 0 && app.indexOf('跟随系统') >= 0 && app.indexOf('data-accent-name=') >= 0
+  && /\.btn\.active\s*{[^}]*background:\s*var\(--text\)/.test(style)
+  && app.indexOf('settings-about-name') >= 0 && app.indexOf('settings-about-ver') >= 0 && app.indexOf('settings-about-note') >= 0
+  && app.indexOf('field-hint') >= 0 && app.indexOf('数据键') < 0);
+
+// ---- 列表排序行（1.2.0 收尾：与标签胶囊同皮肤）----
+t('⑲ 排序行：胶囊按钮 + 排序弹窗，计数右对齐弱化（原生 select 清零）',
+  /class="sort-btn"/.test(app) && app.indexOf('sort-bar select') < 0 && app.indexOf('openSortPicker') >= 0
+  && /\.sort-bar \.count\s*{[^}]*margin-left:\s*auto/.test(style) && /\.sort-btn\s*{[^}]*border-radius:\s*var\(--radius-pill\)/.test(style));
+
+// ---- 图标（1.2.0 重绘：纯几何 / 无文字 / 无渐变）----
+const iconSvg = read('assets/icons/icon.svg') || '';
+t('图标重绘：无渐变/无 text 元素，深底 + 白色几何 + 品牌绿点', iconSvg.indexOf('linearGradient') < 0 && iconSvg.indexOf('<text') < 0
+  && iconSvg.indexOf('#121212') >= 0 && iconSvg.indexOf('#1db954') >= 0);
 
 let pass = 0;
 results.forEach(([name, ok, detail]) => {

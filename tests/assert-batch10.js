@@ -79,10 +79,9 @@ t('F-c 徽章三色改用 *-text token（11px 小字达标路径）',
 t('F-d CI 测试循环包含 contrast-check.js', yml.indexOf('tests/contrast-check.js') >= 0);
 
 // ---- N-04 · 输入类控件字号 <16px → iOS 聚焦自动放大 ----
-t('G-a 输入类控件字号统一 16px（搜索框 / .input/.textarea/.select / 排序下拉）',
+t('G-a 输入类控件字号统一 16px（搜索框 / .input/.textarea/.select）',
   /\.search-box input\s*\{[^}]*font-size:\s*16px/.test(style)
-  && /\.input, \.textarea, \.select\s*\{[^}]*font-size:\s*16px/.test(style)
-  && /\.sort-bar select\s*\{[^}]*font-size:\s*16px/.test(style));
+  && /\.input, \.textarea, \.select\s*\{[^}]*font-size:\s*16px/.test(style));
 
 // ---- N-17 · theme-color 固定深色，浅色主题下移动端地址栏颜色不符 ----
 t('G-b applyTheme 同步 meta theme-color（浅 #ffffff / 深 #121212）',

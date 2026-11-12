@@ -1,18 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1ed760"/>
-      <stop offset="100%" stop-color="#0fa847"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <!-- 订阅堆叠（箱子） -->
-  <rect x="136" y="200" width="240" height="180" rx="16" fill="none" stroke="#fff" stroke-width="20"/>
-  <line x1="136" y1="270" x2="376" y2="270" stroke="#fff" stroke-width="20"/>
-  <line x1="256" y1="200" x2="256" y2="380" stroke="#fff" stroke-width="20"/>
-  <!-- 上方小盒子 -->
-  <rect x="200" y="130" width="112" height="60" rx="10" fill="none" stroke="#fff" stroke-width="16"/>
-  <line x1="256" y1="130" x2="256" y2="190" stroke="#fff" stroke-width="16"/>
-  <!-- 中心 0 -->
-  <text x="256" y="345" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="64" font-weight="800" fill="#fff">¥</text>
+  <!-- 订阅管理 · 图标（1.2.0 定稿）：纯几何、无文字、无渐变 —— 与戒断工具同一设计语言
+       （深底 + 白色几何 + 品牌绿点），缩到 16px 仍可辨认，且不依赖任何平台字形。
+       语义：日历框 = 计费周期；顶部两挂耳 = 月历；底部绿点 = 到期日（订阅的「哪天扣钱」）。 -->
+  <rect width="512" height="512" rx="112" fill="#121212"/>
+  <rect x="132" y="148" width="248" height="228" rx="36" fill="none" stroke="#ffffff" stroke-width="36"/>
+  <line x1="132" y1="232" x2="380" y2="232" stroke="#ffffff" stroke-width="36"/>
+  <line x1="204" y1="118" x2="204" y2="172" stroke="#ffffff" stroke-width="36" stroke-linecap="round"/>
+  <line x1="308" y1="118" x2="308" y2="172" stroke="#ffffff" stroke-width="36" stroke-linecap="round"/>
+  <circle cx="256" cy="316" r="30" fill="#1db954"/>
 </svg>
