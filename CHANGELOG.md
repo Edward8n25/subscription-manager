@@ -85,7 +85,7 @@
 
 - `tests/assert-batch11.js`：31 条断言锁定本版全部 UI 改动（字号/行高/焦点/触控/动效/日历/表单/文案/品牌/提示/设置/图标/排序…）。
 - `tests/contrast-check.js`（批次 F）：128 项对 + 亮度带，已进 CI。
-- **smoke 基座改造**：由 `node:vm` 改为「临时替换 globalThis + 字面量 require」装载真实 app.js（app.js 是单 IIFE、不写全局，隔离性等价；用例间按「下一个加载前还原上一个」处理调用期全局解析）。改因 Mimosa 安全钩子把 `vm.runInContext` 误报为代码注入，属工具误报而非代码缺陷；规范 §16 的「真实代码 + stub 环境」语义不变。
+- **smoke 基座改造**：由 `node:vm` 改为「临时替换 globalThis + 字面量 require」装载真实 app.js（app.js 是单 IIFE、不写全局，隔离性等价；用例间按「下一个加载前还原上一个」处理调用期全局解析）。改因 Mimosa 安全钩子把 `vm.runInContext` 误报为代码注入，属工具误报而非代码缺陷；规范 §16 的「真实代码 + stub 环境」语义不变。**兼容性补丁**：Node 20 及更早没有全局 `navigator`，基座在缺失时补一个可配置 stub（CI 首次运行即因此失败）；CI Node 版本同步升到 22。
 - 断言总量：**195 项**（batch2~11 共 155 + smoke 32 + style 8）+ contrast 128 项对；反向验证记录见各批次段落。
 
 ### 文档

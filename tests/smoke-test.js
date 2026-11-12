@@ -6,6 +6,13 @@
    用法：node tests/smoke-test.js */
 
 // ---- stub DOM（结构抄自样板 quit-tracker tests/smoke-test.js）----
+// Node 20 及更早没有全局 navigator（22+ 才自带，且为只读 getter）；
+// app.js 初始化会读 `'serviceWorker' in navigator`，缺失时直接 ReferenceError。
+// 这里只在缺失时补一个可配置的空对象，Node 22+ 直接复用内置的。
+if (typeof globalThis.navigator === 'undefined') {
+  Object.defineProperty(globalThis, 'navigator', { value: {}, configurable: true, writable: true });
+}
+
 function makeEl() {
   return {
     innerHTML: '',
