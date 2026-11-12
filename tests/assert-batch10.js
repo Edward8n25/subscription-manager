@@ -61,9 +61,9 @@ testFiles.forEach(f => { batchCount += ((read('tests/' + f) || '').match(/^t\(/g
 const smokeCount = ((read('tests/smoke-test.js') || '').match(/^results\.push\(\[/gm) || []).length;
 const styleCount = ((read('tests/style-consistency.js') || '').match(/^results\.push\(\[/gm) || []).length;
 const totalCount = batchCount + smokeCount + styleCount;
-t('N-15a README 断言数与实测一致（batch 共 ' + batchCount + ' / 全部 ' + totalCount + '；93 与 133 清除）',
+t('N-15a README 测试数据与实测一致（测试表 ' + batchCount + ' + 徽章 ' + totalCount + ' passing；93/133 清除）',
   readme.indexOf('共 93 项') < 0 && readme.indexOf('133 项断言') < 0
-  && readme.indexOf('共 ' + batchCount + ' 项') >= 0 && readme.indexOf(totalCount + ' 项断言') >= 0,
+  && readme.indexOf('| ' + batchCount + ' |') >= 0 && readme.indexOf(totalCount + ' tests passing') >= 0,
   '实测 batch=' + batchCount + ' smoke=' + smokeCount + ' style=' + styleCount);
 t('N-15b README ES5 表述精确（含 ES2015 内置方法说明与 IE11 边界）', readme.indexOf('ES2015') >= 0 && readme.indexOf('不支持 IE11') >= 0);
 

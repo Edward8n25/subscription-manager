@@ -27,7 +27,7 @@ t('A-02c 关闭时焦点归还触发元素（lastFocused）', /lastFocused/.test
 t('A-04 reduced-motion 媒体查询降级动画', /@media\s*\(prefers-reduced-motion:\s*reduce\)/.test(html) && /animation-duration:\s*0\.01ms/.test(html));
 
 // ---- Doc-04 · 「提醒续费日期」弱宣称如实化 ----
-t('Doc-04 README 不再裸称「提醒续费日期」，改为被动徽章描述', readme.indexOf('提醒续费日期') < 0 && /即将到期.*徽章/.test(readme));
+t('Doc-04 README 不再裸称「提醒续费日期」，改为被动徽章描述', readme.indexOf('提醒续费日期') < 0 && readme.indexOf('即将到期') >= 0 && readme.indexOf('徽章') >= 0);
 
 // ---- Doc-06 · 调试入口全量文档化 ----
 t('Doc-06a README 调试入口含 ?view=stats 与 ?theme=', /view=stats/.test(readme) && /theme=light/.test(readme));

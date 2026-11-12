@@ -4,6 +4,7 @@ node_modules/
 archive/
 .trash-pending/
 *.bak
+.mimosa/
 
 # ---- 系统/编辑器 ----
 .DS_Store
